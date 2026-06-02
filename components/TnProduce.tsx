@@ -204,7 +204,7 @@ const GENRES: Genre[] = [
   {id:"custom",name:"カスタム",sunoKw:"",lyricStyle:"",checkKw:""},
 ];
 
-const TABS=[{id:"create",label:"CREATE"},{id:"generate",label:"GENERATE"},{id:"keywords",label:"KEYWORDS"},{id:"revise",label:"REVISE"},{id:"check",label:"CHECK"}];
+const TABS:{id:string;label:string}[]=[{id:"create",label:"CREATE"},{id:"generate",label:"GENERATE"},{id:"keywords",label:"KEYWORDS"},{id:"revise",label:"REVISE"},{id:"check",label:"CHECK"}];
 const ENDINGS=["後悔","祈り","解放","曖昧","前向き","感謝","怒り","余韻"];
 const VOCAL_GENDER_OPTS=["男性","女性"];
 const VOCAL_TEXTURE_OPTS=["やわらかい","力強い","セクシー","透き通った","ダーク","中性的"];
@@ -324,8 +324,8 @@ export default function App(){
   const[pst,setPst]=useState("");
   const[selKw,setSelKw]=useState<string[]>([]);
   const[extraKw,setExtraKw]=useState("");
-  const[cb,setCb]=useState(Array(CHECKS_BEFORE.length).fill(false));
-  const[ca,setCa]=useState(Array(CHECKS_AFTER.length).fill(false));
+  const[cb,setCb]=useState<boolean[]>(Array(CHECKS_BEFORE.length).fill(false));
+  const[ca,setCa]=useState<boolean[]>(Array(CHECKS_AFTER.length).fill(false));
   const[confirmed,setConfirmed]=useState("");
   const[lyric,setLyric]=useState("");
   const[hira,setHira]=useState("");
@@ -419,7 +419,7 @@ export default function App(){
   function togE(v:string){setEndings(function(p){return p.includes(v)?p.filter(function(x){return x!==v;}):p.concat([v]);});}
   function togAge(i:number){setTargetAges(function(p){return p.includes(i)?p.filter(function(x){return x!==i;}):p.concat([i]);});}
   function togKw(k:string){setSelKw(function(p){return p.includes(k)?p.filter(function(x){return x!==k;}):p.concat([k]);});}
-  function nullTog(val:number|null,setter:(v:number|null)=>void){return function(i:number){setter(val===i?null:i);};}
+  function nullTog(val:number|null,setter:(v:number|null)=>void):(i:number|null)=>void{return function(i:number|null){if(i===null){setter(null);}else{setter(val===i?null:i);}};}
   function togglePart(id:string){setParts(function(p){return p.map(function(x){return x.id===id?Object.assign({},x,{enabled:!x.enabled}):x;});});}
   function movePart(idx:number,dir:number){setParts(function(prev){const next=prev.slice();const t=idx+dir;if(t<0||t>=next.length)return prev;const tmp=next[idx];next[idx]=next[t];next[t]=tmp;return next;});}
   async function doCopy(text:string,key:string){
@@ -431,7 +431,7 @@ export default function App(){
   function copyLabel(key:string,def:string){return copyOk===key?"✓ COPIED":def;}
   function resetCreate(){
     if(!window.confirm("入力内容を全てリセットします。よろしいですか？"))return;
-    setF(initF);setEndings([]);setGenreMode("auto");setSelectedGenres([]);setCustomGenreName("");setCustomGenreStyle("");
+    setF(initF);setEndings([]);setGenreMode("auto");setSelectedGenres([]);setCustomGenreName("");setCustomGenreKw("");setCustomGenreStyle("");
     setVocalGender(0);setLangRatio(6);setShowAdv(false);setVocalTexture(null);setVocalRange(null);setVocalOrigin(null);
     setChordProg(null);setBpm(null);setTargetAges([]);setTargetGender(null);setMetaphor(0);setDual(0);
     setStructMode("basic");setParts(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
@@ -614,7 +614,7 @@ export default function App(){
     try{
       const r=await window.storage.get("tnp:"+pkey.trim(),true);
       if(!r){setPst("err:プロジェクトが見つかりません");return;}
-      const d=JSON.parse(r.value);
+      const d=JSON.parse(r.value) as Partial<{F:typeof initF;endings:string[];genreMode:string;selectedGenres:string[];customGenreName:string;customGenreKw:string;customGenreStyle:string;vocalGender:number;langRatio:number;vocalTexture:number|null;vocalRange:number|null;vocalOrigin:number|null;chordProg:number|null;bpm:number|null;targetAges:number[];targetGender:number|null;metaphor:number;dual:number;structMode:string;parts:Part[];selKw:string[];extraKw:string;}>;
       if(d.F)setF(d.F);if(d.endings)setEndings(d.endings);if(d.genreMode)setGenreMode(d.genreMode);if(d.selectedGenres)setSelectedGenres(d.selectedGenres);
       if(d.customGenreName)setCustomGenreName(d.customGenreName);if(d.customGenreKw)setCustomGenreKw(d.customGenreKw);if(d.customGenreStyle)setCustomGenreStyle(d.customGenreStyle);
       if(d.vocalGender!==undefined)setVocalGender(d.vocalGender);if(d.langRatio!==undefined)setLangRatio(d.langRatio);
@@ -781,13 +781,13 @@ export default function App(){
                   <div className="t-q">
                     <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">ボーカル性別</div><Badge type="req"/></div>
                     <div className="t-badge-note">音楽生成AIプロンプトの根幹。必ず選ぶ。</div>
-                    <Seg opts={VOCAL_GENDER_OPTS} val={vocalGender} onChange={setVocalGender}/>
+                    <Seg opts={VOCAL_GENDER_OPTS} val={vocalGender} onChange={function(i:number){setVocalGender(i);}}/>
                   </div>
                   <div className="t-div"></div>
                   <div className="t-q">
                     <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">言語の割合</div><Badge type="rec"/></div>
                     <div className="t-badge-note">歌詞と音楽生成AIプロンプト両方に反映される。全英詞は海外系ボーカルと組み合わせると効果的。</div>
-                    <Seg opts={LANG_RATIO_OPTS} val={langRatio} onChange={setLangRatio}/>
+                    <Seg opts={LANG_RATIO_OPTS} val={langRatio} onChange={function(i:number){setLangRatio(i);}}/>
                   </div>
                   <div className="t-div"></div>
                   <button className="t-adv" onClick={function(){setShowAdv(!showAdv);}}>
@@ -830,9 +830,9 @@ export default function App(){
                       <div className="t-div"></div>
                       <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">ターゲット性別</div><Badge type="opt"/></div><div className="t-badge-note">歌詞の語感・視点に影響する。</div><NullSeg opts={TARGET_GENDER_OPTS} val={targetGender} onChange={nullTog(targetGender,setTargetGender)}/></div>
                       <div className="t-div"></div>
-                      <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">比喩・匂わせのレベル</div><Badge type="opt"/></div><div className="t-badge-note">AIにおまかせならジャンルに合わせて判断する。二重構造を使う場合は特に重要。</div><Seg opts={METAPHOR_OPTS} val={metaphor} onChange={setMetaphor}/></div>
+                      <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">比喩・匂わせのレベル</div><Badge type="opt"/></div><div className="t-badge-note">AIにおまかせならジャンルに合わせて判断する。二重構造を使う場合は特に重要。</div><Seg opts={METAPHOR_OPTS} val={metaphor} onChange={function(i:number){setMetaphor(i);}}/></div>
                       <div className="t-div"></div>
-                      <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">二重構造</div><Badge type="opt"/></div><div className="t-badge-note">特定の相手に届けたい場合にONにする。一般リスナーには別の意味に聴こえる歌詞を設計する。</div><Seg opts={DUAL_OPTS} val={dual} onChange={setDual}/></div>
+                      <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">二重構造</div><Badge type="opt"/></div><div className="t-badge-note">特定の相手に届けたい場合にONにする。一般リスナーには別の意味に聴こえる歌詞を設計する。</div><Seg opts={DUAL_OPTS} val={dual} onChange={function(i:number){setDual(i);}}/></div>
                     </div>
                   )}
                 </div>
