@@ -20,163 +20,159 @@ type Layer = {
 
 declare global {
   interface Window {
-    storage: {
-      set(key: string, value: string, shared?: boolean): Promise<unknown>;
-      get(key: string, shared?: boolean): Promise<{value: string} | null>;
-    };
     confirm(msg: string): boolean;
     prompt(msg: string): string|null;
   }
 }
 
 const S = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Serif+JP:wght@300;400;600&family=Space+Mono:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
   .t*{box-sizing:border-box;margin:0;padding:0;}
-  .t{--g:#c8a96e;--gd:rgba(200,169,110,0.13);--gg:rgba(200,169,110,0.06);--bg:#09090e;--sf:#0f0f18;--sf2:#13131e;--bd:#1c1c2a;--tx:#e8e4dc;--txm:#a8a49c;--txd:#5a5660;--gr:#7ec87e;--rd:#c87e7e;font-family:'Noto Serif JP',serif;background:var(--bg);color:var(--tx);min-height:100vh;}
-  .t-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 15% 5%,rgba(200,169,110,.04) 0%,transparent 60%);}
+  .t{--g:#c850c0;--g2:#4158d0;--gd:rgba(200,80,192,0.12);--gg:rgba(200,80,192,0.06);--bg:#060610;--sf:#0c0c1e;--sf2:#10102a;--bd:#1e1e38;--tx:#f0eeff;--txm:#9896b8;--txd:#4a4870;--gr:#7ec87e;--rd:#e05555;--grad:linear-gradient(135deg,#c850c0,#4158d0);font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+  .t-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 0% 0%,rgba(200,80,192,.08) 0%,transparent 50%),radial-gradient(ellipse 60% 40% at 100% 100%,rgba(65,88,208,.08) 0%,transparent 50%);}
   .t-w{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:0 18px 100px;}
   .t-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--bd);gap:10px;}
-  .t-brand{font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:.4em;color:var(--g);text-transform:uppercase;font-weight:300;white-space:nowrap;}
+  .t-brand{font-family:'Space Grotesk',sans-serif;font-size:15px;letter-spacing:.15em;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-transform:uppercase;font-weight:700;white-space:nowrap;}
   .t-tabs{display:flex;gap:3px;flex-wrap:wrap;}
-  .t-tab{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:2px;cursor:pointer;border:1px solid transparent;color:var(--txd);background:transparent;transition:all .15s;}
+  .t-tab{font-family:'Space Grotesk',sans-serif;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:20px;cursor:pointer;border:1px solid transparent;color:var(--txd);background:transparent;transition:all .2s;font-weight:500;}
   .t-tab:hover{color:var(--txm);border-color:var(--bd);}
-  .t-tab.on{color:var(--g);border-color:rgba(200,169,110,.3);background:var(--gd);}
+  .t-tab.on{color:#fff;border-color:transparent;background:var(--grad);}
   .t-hero{padding:40px 0 32px;border-bottom:1px solid var(--bd);margin-bottom:28px;}
-  .t-eye{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--g);text-transform:uppercase;opacity:.7;margin-bottom:12px;}
-  .t-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,5vw,44px);font-weight:300;line-height:1.25;letter-spacing:.05em;margin-bottom:10px;}
-  .t-h1 em{font-style:italic;color:var(--g);}
+  .t-eye{font-family:'Space Grotesk',sans-serif;font-size:9px;letter-spacing:.2em;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-transform:uppercase;opacity:.9;margin-bottom:12px;font-weight:600;}
+  .t-h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(24px,5vw,40px);font-weight:700;line-height:1.2;letter-spacing:-.01em;margin-bottom:10px;}
+  .t-h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
   .t-sub{font-size:11px;color:var(--txd);line-height:2;letter-spacing:.06em;}
   .t-s{margin-bottom:24px;}
-  .t-sh{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--sf2);border:1px solid var(--bd);border-bottom:none;border-radius:2px 2px 0 0;}
-  .t-sn{font-family:'Space Mono',monospace;font-size:8px;color:var(--g);letter-spacing:.2em;opacity:.7;}
-  .t-st{font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:.08em;flex:1;}
+  .t-sh{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--sf2);border:1px solid var(--bd);border-bottom:none;border-radius:12px 12px 0 0;}
+  .t-sn{font-family:'Space Grotesk',sans-serif;font-size:8px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.15em;opacity:1;font-weight:700;}
+  .t-st{font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:.02em;flex:1;font-weight:600;}
   .t-sh2{font-size:10px;color:var(--txd);letter-spacing:.04em;text-align:right;line-height:1.6;}
-  .t-sb{padding:18px 16px;background:var(--sf);border:1px solid var(--bd);border-radius:0 0 2px 2px;display:flex;flex-direction:column;gap:14px;}
+  .t-sb{padding:18px 16px;background:var(--sf);border:1px solid var(--bd);border-radius:0 0 12px 12px;display:flex;flex-direction:column;gap:14px;}
   .t-q{display:flex;flex-direction:column;gap:5px;}
-  .t-ql{font-family:'Space Mono',monospace;font-size:8px;color:var(--g);letter-spacing:.15em;opacity:.75;}
+  .t-ql{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--g);letter-spacing:.15em;opacity:.75;}
   .t-qt{font-size:11px;color:var(--txm);line-height:1.9;letter-spacing:.05em;padding-left:10px;border-left:1px solid var(--bd);}
   .t-qn{display:block;font-size:10px;color:var(--txd);margin-top:2px;font-style:italic;}
   .t-qn.star{color:var(--g);opacity:.9;}
   .t-div{height:1px;background:var(--bd);opacity:.5;}
-  textarea,input[type=text]{width:100%;background:rgba(255,255,255,.02);border:1px solid var(--bd);border-radius:2px;color:var(--tx);font-family:'Noto Serif JP',serif;font-size:12px;line-height:1.9;letter-spacing:.04em;padding:10px 13px;resize:vertical;outline:none;transition:border-color .2s,background .2s;}
+  textarea,input[type=text]{width:100%;background:rgba(255,255,255,.02);border:1px solid var(--bd);border-radius:2px;color:var(--tx);font-family:'Noto Sans JP',sans-serif;font-size:12px;line-height:1.9;letter-spacing:.04em;padding:10px 13px;resize:vertical;outline:none;transition:border-color .2s,background .2s;}
   textarea::placeholder,input::placeholder{color:var(--txd);font-size:10px;opacity:.55;}
-  textarea:focus,input:focus{border-color:rgba(200,169,110,.3);background:rgba(200,169,110,.025);}
-  .t-core{background:var(--gd);border:1px solid rgba(200,169,110,.2);border-radius:2px;padding:12px;}
-  .t-core textarea{background:transparent;border:none;border-bottom:1px solid rgba(200,169,110,.25);border-radius:0;font-size:13px;font-weight:600;color:var(--g);padding:5px 0;min-height:42px;}
+  textarea:focus,input:focus{border-color:rgba(200,80,192,.4);background:rgba(200,80,192,.03);}
+  .t-core{background:var(--gd);border:1px solid rgba(200,80,192,.2);border-radius:8px;padding:12px;}
+  .t-core textarea{background:transparent;border:none;border-bottom:1px solid rgba(200,80,192,.25);border-radius:0;font-size:13px;font-weight:600;color:var(--g);padding:5px 0;min-height:42px;}
   .t-chips{display:flex;flex-wrap:wrap;gap:6px;}
   .t-chip{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--bd);border-radius:2px;cursor:pointer;transition:all .15s;background:transparent;font-size:10px;color:var(--txd);letter-spacing:.04em;}
-  .t-chip.on{border-color:var(--g);background:var(--gd);color:var(--g);}
+  .t-chip.on{border-color:var(--g);background:var(--gd);color:#fff;}
   .t-dot{width:5px;height:5px;border-radius:50%;border:1px solid currentColor;flex-shrink:0;}
   .t-chip.on .t-dot{background:var(--g);}
-  .t-seg{display:flex;border:1px solid var(--bd);border-radius:2px;overflow:hidden;flex-wrap:wrap;}
+  .t-seg{display:flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden;flex-wrap:wrap;}
   .t-seg-o{flex:1;min-width:55px;text-align:center;padding:8px 5px;font-size:10px;color:var(--txd);cursor:pointer;border-right:1px solid var(--bd);transition:all .15s;background:transparent;letter-spacing:.03em;}
   .t-seg-o:last-child{border-right:none;}
-  .t-seg-o.on{color:var(--g);background:var(--gd);}
+  .t-seg-o.on{color:#fff;background:var(--grad);}
   .t-genre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;}
-  .t-genre-btn{padding:10px 8px;border:1px solid var(--bd);border-radius:2px;cursor:pointer;font-size:10px;color:var(--txd);background:transparent;transition:all .15s;text-align:center;letter-spacing:.03em;line-height:1.4;}
-  .t-genre-btn:hover{border-color:rgba(200,169,110,.25);color:var(--txm);}
-  .t-genre-btn.on{border-color:var(--g);background:var(--gd);color:var(--g);}
-  .t-btn{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.15em;text-transform:uppercase;padding:9px 16px;border-radius:2px;cursor:pointer;transition:all .15s;border:1px solid;}
-  .t-btn-g{color:var(--g);border-color:rgba(200,169,110,.4);background:var(--gd);}
-  .t-btn-g:hover{background:rgba(200,169,110,.22);}
-  .t-btn-gh{color:var(--txd);border-color:var(--bd);background:transparent;}
+  .t-genre-btn{padding:10px 8px;border:1px solid var(--bd);border-radius:8px;cursor:pointer;font-size:10px;color:var(--txd);background:transparent;transition:all .2s;text-align:center;letter-spacing:.03em;line-height:1.4;}
+  .t-genre-btn:hover{border-color:rgba(200,80,192,.2);color:var(--txm);}
+  .t-genre-btn.on{border-color:transparent;background:var(--grad);color:#fff;}
+  .t-btn{font-family:'Space Grotesk',sans-serif;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:10px 18px;border-radius:8px;cursor:pointer;transition:all .2s;border:1px solid;font-weight:600;}
+  .t-btn-g{color:#fff;border-color:transparent;background:var(--grad);font-weight:600;}
+  .t-btn-g:hover{opacity:.88;}
+  .t-btn-gh{color:var(--txm);border-color:var(--bd);background:transparent;}
   .t-btn-gh:hover{color:var(--txm);}
   .t-btn-rd{color:var(--rd);border-color:rgba(200,126,126,.3);background:rgba(200,126,126,.08);}
   .t-btn-ok{color:var(--gr);border-color:rgba(126,200,126,.3);background:rgba(126,200,126,.1);}
   .t-btn:disabled{opacity:.35;cursor:not-allowed;}
   .t-br{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-  .t-out{background:rgba(255,255,255,.02);border:1px solid var(--bd);border-radius:2px;padding:16px;font-size:12px;color:var(--txm);line-height:2;letter-spacing:.04em;white-space:pre-wrap;overflow-y:auto;font-family:'Noto Serif JP',serif;}
-  .t-out.lit{border-color:rgba(200,169,110,.18);color:var(--tx);}
-  .t-out.diag{border-color:rgba(200,169,110,.3);background:rgba(200,169,110,.04);color:var(--tx);font-size:11px;}
-  .t-stb{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;padding:6px 10px;border-radius:2px;}
+  .t-out{background:rgba(255,255,255,.02);border:1px solid var(--bd);border-radius:2px;padding:16px;font-size:12px;color:var(--txm);line-height:2;letter-spacing:.04em;white-space:pre-wrap;overflow-y:auto;font-family:'Noto Sans JP',sans-serif;}
+  .t-out.lit{border-color:rgba(200,80,192,.2);color:var(--tx);}
+  .t-out.diag{border-color:rgba(200,80,192,.25);background:rgba(200,80,192,.04);color:var(--tx);font-size:11px;}
+  .t-stb{font-family:'Space Grotesk',sans-serif;font-size:9px;letter-spacing:.1em;padding:6px 10px;border-radius:2px;}
   .t-stb.ok{color:var(--gr);background:rgba(126,200,126,.08);border:1px solid rgba(126,200,126,.2);}
   .t-stb.err{color:var(--rd);background:rgba(200,126,126,.08);border:1px solid rgba(200,126,126,.2);}
   .t-sr{display:flex;gap:7px;align-items:center;}
   .t-sr input{flex:1;}
-  .t-info{background:var(--gg);border:1px solid rgba(200,169,110,.1);border-radius:2px;padding:12px 14px;font-size:11px;color:var(--txd);line-height:2;letter-spacing:.04em;}
-  .t-info strong{color:var(--g);}
+  .t-info{background:var(--gg);border:1px solid rgba(200,80,192,.12);border-radius:8px;padding:12px 14px;font-size:11px;color:var(--txd);line-height:2;letter-spacing:.04em;}
+  .t-info strong{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
   .t-chat{border:1px solid var(--bd);border-radius:2px;overflow:hidden;}
   .t-chat-msgs{min-height:80px;max-height:360px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--sf);}
   .t-msg{display:flex;flex-direction:column;gap:3px;}
-  .t-msg-who{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.12em;opacity:.55;text-transform:uppercase;}
+  .t-msg-who{font-family:'Space Grotesk',sans-serif;font-size:8px;letter-spacing:.12em;opacity:.55;text-transform:uppercase;}
   .t-msg.u .t-msg-who{color:var(--g);text-align:right;}
   .t-msg.a .t-msg-who{color:var(--txd);}
   .t-msg-body{font-size:12px;line-height:1.9;letter-spacing:.04em;white-space:pre-wrap;padding:10px 13px;border-radius:2px;}
-  .t-msg.u .t-msg-body{background:var(--gd);border:1px solid rgba(200,169,110,.13);color:var(--tx);text-align:right;}
+  .t-msg.u .t-msg-body{background:var(--gd);border:1px solid rgba(200,80,192,.13);color:var(--tx);text-align:right;}
   .t-msg.a .t-msg-body{background:rgba(255,255,255,.02);border:1px solid var(--bd);color:var(--txm);}
   .t-chat-in{display:flex;border-top:1px solid var(--bd);}
   .t-chat-in textarea{border:none;border-radius:0;background:var(--sf2);min-height:50px;resize:none;flex:1;font-size:12px;padding:13px 15px;}
-  .t-chat-send{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;background:var(--gd);border:none;border-left:1px solid var(--bd);color:var(--g);padding:0 16px;cursor:pointer;white-space:nowrap;}
+  .t-chat-send{font-family:'Space Grotesk',sans-serif;font-size:8px;letter-spacing:.12em;text-transform:uppercase;background:var(--gd);border:none;border-left:1px solid var(--bd);color:var(--g);padding:0 16px;cursor:pointer;white-space:nowrap;}
   .t-chat-send:disabled{opacity:.35;cursor:not-allowed;}
   .t-kw-s{margin-bottom:14px;}
-  .t-kw-t{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--g);opacity:.55;text-transform:uppercase;margin-bottom:7px;}
+  .t-kw-t{font-family:'Space Grotesk',sans-serif;font-size:8px;letter-spacing:.2em;color:var(--g);opacity:.55;text-transform:uppercase;margin-bottom:7px;}
   .t-kw-g{display:flex;flex-wrap:wrap;gap:5px;}
-  .t-kw{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.07em;padding:5px 8px;border:1px solid var(--bd);border-radius:2px;cursor:pointer;color:var(--txd);background:transparent;}
-  .t-kw.on{border-color:var(--g);color:var(--g);background:var(--gd);}
+  .t-kw{font-family:'Space Grotesk',sans-serif;font-size:8px;letter-spacing:.07em;padding:5px 8px;border:1px solid var(--bd);border-radius:2px;cursor:pointer;color:var(--txd);background:transparent;}
+  .t-kw.on{border-color:transparent;color:#fff;background:var(--grad);}
   .t-ci{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--bd);cursor:pointer;}
   .t-ci:last-child{border-bottom:none;}
   .t-cb{width:13px;height:13px;border:1px solid var(--txd);border-radius:2px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;}
-  .t-ci.done .t-cb{border-color:var(--g);background:var(--gd);}
+  .t-ci.done .t-cb{border-color:transparent;background:var(--grad);}
   .t-ct{font-size:11px;color:var(--txm);line-height:1.8;letter-spacing:.04em;}
   .t-ci.done .t-ct{color:var(--txd);text-decoration:line-through;}
-  .t-pat{border:1px solid var(--bd);border-radius:2px;overflow:hidden;margin-bottom:9px;}
+  .t-pat{border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:9px;}
   .t-pat-h{display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--sf2);border-bottom:1px solid var(--bd);}
-  .t-pat-n{font-family:'Space Mono',monospace;font-size:8px;color:var(--g);opacity:.65;letter-spacing:.1em;}
+  .t-pat-n{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--g);opacity:.65;letter-spacing:.1em;}
   .t-pat-t{font-size:11px;color:var(--txm);letter-spacing:.04em;}
   .t-pat-b{padding:11px 14px;font-size:11px;color:var(--txd);line-height:2;letter-spacing:.04em;}
-  .t-pat-ex{background:rgba(200,169,110,.04);border-left:2px solid rgba(200,169,110,.18);padding:7px 10px;margin-top:7px;font-style:italic;font-size:10px;color:var(--txm);white-space:pre-wrap;}
-  .t-pat-ins{font-family:'Space Mono',monospace;font-size:8px;color:var(--g);letter-spacing:.1em;padding:5px 10px;border:1px solid rgba(200,169,110,.2);border-radius:2px;cursor:pointer;background:transparent;margin-top:7px;display:inline-block;}
-  .t-ins-ok{font-family:'Space Mono',monospace;font-size:8px;color:var(--gr);letter-spacing:.1em;padding:5px 10px;margin-top:7px;display:inline-block;}
+  .t-pat-ex{background:rgba(200,80,192,.04);border-left:2px solid rgba(200,80,192,.25);padding:7px 10px;margin-top:7px;font-style:italic;font-size:10px;color:var(--txm);white-space:pre-wrap;}
+  .t-pat-ins{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--g);letter-spacing:.06em;padding:5px 12px;border:1px solid rgba(200,80,192,.2);border-radius:20px;cursor:pointer;background:transparent;margin-top:7px;display:inline-block;font-weight:600;}
+  .t-ins-ok{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--gr);letter-spacing:.1em;padding:5px 10px;margin-top:7px;display:inline-block;}
   .t-part-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);}
   .t-part-item:last-child{border-bottom:none;}
   .t-part-item.off{opacity:.4;}
-  .t-part-name{flex:1;font-size:11px;color:var(--txm);letter-spacing:.04em;font-family:'Space Mono',monospace;}
-  .t-part-toggle{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.1em;padding:4px 10px;border-radius:2px;cursor:pointer;border:1px solid;transition:all .15s;}
-  .t-part-toggle.on{color:var(--g);border-color:rgba(200,169,110,.4);background:var(--gd);}
+  .t-part-name{flex:1;font-size:11px;color:var(--txm);letter-spacing:.04em;font-family:'Space Grotesk',sans-serif;}
+  .t-part-toggle{font-family:'Space Grotesk',sans-serif;font-size:8px;letter-spacing:.1em;padding:4px 10px;border-radius:2px;cursor:pointer;border:1px solid;transition:all .15s;}
+  .t-part-toggle.on{color:#fff;border-color:transparent;background:var(--grad);}
   .t-part-toggle.off{color:var(--txd);border-color:var(--bd);background:transparent;}
   .t-part-arrow{font-size:12px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd);border-radius:2px;cursor:pointer;color:var(--txd);background:transparent;}
   .t-part-arrow:disabled{opacity:.25;cursor:not-allowed;}
-  .t-preview{font-family:'Space Mono',monospace;font-size:9px;color:var(--g);letter-spacing:.06em;line-height:1.8;padding:10px 12px;background:var(--gd);border:1px solid rgba(200,169,110,.2);border-radius:2px;margin-bottom:12px;word-break:break-all;}
-  .t-sm{display:flex;border:1px solid var(--bd);border-radius:2px;overflow:hidden;margin-bottom:12px;}
+  .t-preview{font-family:'Space Grotesk',sans-serif;font-size:9px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.06em;line-height:1.8;padding:10px 12px;background-color:var(--gd);border:1px solid rgba(200,80,192,.2);border-radius:8px;margin-bottom:12px;word-break:break-all;}
+  .t-sm{display:flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:12px;}
   .t-sm-o{flex:1;text-align:center;padding:10px 8px;font-size:11px;color:var(--txd);cursor:pointer;border-right:1px solid var(--bd);transition:all .15s;background:transparent;letter-spacing:.04em;}
   .t-sm-o:last-child{border-right:none;}
-  .t-sm-o.on{color:var(--g);background:var(--gd);}
-  .t-cf-note{font-size:10px;color:var(--g);padding:6px 10px;background:var(--gd);border-radius:2px;border:1px solid rgba(200,169,110,.2);margin-top:8px;font-family:'Space Mono',monospace;letter-spacing:.06em;}
+  .t-sm-o.on{color:#fff;background:var(--grad);}
+  .t-cf-note{font-size:10px;color:var(--g);padding:6px 10px;background:var(--gd);border-radius:8px;border:1px solid rgba(200,80,192,.2);margin-top:8px;font-family:'Space Grotesk',sans-serif;letter-spacing:.04em;}
   .t-adv{display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 0;color:var(--txd);font-size:11px;letter-spacing:.04em;border:none;background:transparent;width:100%;}
   .t-adv:hover{color:var(--txm);}
-  .t-adv-arr{font-family:'Space Mono',monospace;font-size:9px;color:var(--g);}
+  .t-adv-arr{font-family:'Space Grotesk',sans-serif;font-size:9px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;}
   .t-tip{display:flex;gap:9px;font-size:10px;color:var(--txd);line-height:1.9;letter-spacing:.04em;padding:3px 0;}
-  .t-tip-m{color:var(--g);font-family:'Space Mono',monospace;font-size:8px;opacity:.55;flex-shrink:0;margin-top:3px;}
-  .t-badge{display:inline-flex;align-items:center;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.1em;padding:3px 7px;border-radius:2px;margin-bottom:4px;}
-  .t-badge.req{color:#e8c97a;background:rgba(232,201,122,.12);border:1px solid rgba(232,201,122,.3);}
+  .t-tip-m{color:var(--g);font-family:'Space Grotesk',sans-serif;font-size:8px;opacity:.55;flex-shrink:0;margin-top:3px;}
+  .t-badge{display:inline-flex;align-items:center;font-family:'Space Grotesk',sans-serif;font-size:8px;letter-spacing:.08em;padding:3px 8px;border-radius:20px;margin-bottom:4px;font-weight:600;}
+  .t-badge.req{color:#ff80b5;background:rgba(255,128,181,.1);border:1px solid rgba(255,128,181,.3);}
   .t-badge.rec{color:#9ec8a0;background:rgba(158,200,160,.1);border:1px solid rgba(158,200,160,.25);}
   .t-badge.opt{color:var(--txd);background:rgba(255,255,255,.03);border:1px solid var(--bd);}
   .t-badge-note{font-size:10px;color:var(--txd);line-height:1.7;letter-spacing:.04em;margin-bottom:6px;}
   .t-title-opts{display:flex;flex-direction:column;gap:8px;}
-  .t-title-opt{padding:12px 16px;border:1px solid var(--bd);border-radius:2px;cursor:pointer;font-size:12px;color:var(--txm);line-height:1.7;letter-spacing:.04em;transition:all .15s;background:transparent;text-align:left;width:100%;}
-  .t-title-opt:hover{border-color:rgba(200,169,110,.3);color:var(--tx);}
-  .t-title-opt.sel{border-color:var(--g);background:var(--gd);color:var(--tx);}
-  .t-title-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--g);opacity:.6;letter-spacing:.1em;margin-bottom:3px;}
-  .t-step-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--g);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;opacity:.8;}
+  .t-title-opt{padding:12px 16px;border:1px solid var(--bd);border-radius:8px;cursor:pointer;font-size:12px;color:var(--txm);line-height:1.7;letter-spacing:.04em;transition:all .2s;background:transparent;text-align:left;width:100%;}
+  .t-title-opt:hover{border-color:rgba(200,80,192,.25);color:var(--tx);}
+  .t-title-opt.sel{border-color:transparent;background:var(--grad);color:#fff;}
+  .t-title-label{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--g);opacity:.6;letter-spacing:.1em;margin-bottom:3px;}
+  .t-step-label{font-family:'Space Grotesk',sans-serif;font-size:9px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-weight:700;}
   .t-guide-item{padding:14px 0;border-bottom:1px solid var(--bd);}
   .t-guide-item:last-child{border-bottom:none;}
-  .t-guide-h{font-family:'Space Mono',monospace;font-size:9px;color:var(--g);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+  .t-guide-h{font-family:'Space Grotesk',sans-serif;font-size:9px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;font-weight:700;}
   .t-guide-txt{font-size:11px;color:var(--txm);line-height:2;letter-spacing:.04em;white-space:pre-wrap;}
   .t-ov{position:fixed;inset:0;background:rgba(9,9,14,.93);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .t-mo{background:var(--sf2);border:1px solid rgba(200,169,110,.2);border-radius:4px;max-width:460px;width:100%;overflow:hidden;}
+  .t-mo{background:var(--sf2);border:1px solid rgba(200,80,192,.2);border-radius:20px;max-width:460px;width:100%;overflow:hidden;}
   .t-mo-top{padding:28px 24px 20px;border-bottom:1px solid var(--bd);}
-  .t-mo-br{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.4em;color:var(--g);text-transform:uppercase;font-weight:300;margin-bottom:14px;}
-  .t-mo-t{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;line-height:1.3;margin-bottom:8px;}
-  .t-mo-t em{font-style:italic;color:var(--g);}
+  .t-mo-br{font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:.2em;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-transform:uppercase;font-weight:700;margin-bottom:14px;}
+  .t-mo-t{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;line-height:1.3;margin-bottom:8px;}
+  .t-mo-t em{font-style:normal;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
   .t-mo-s{font-size:11px;color:var(--txd);line-height:2;}
   .t-mo-b{padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
   .t-mo-step{display:flex;gap:12px;align-items:flex-start;}
-  .t-mo-n{font-family:'Space Mono',monospace;font-size:9px;color:var(--g);opacity:.65;flex-shrink:0;width:18px;}
+  .t-mo-n{font-family:'Space Grotesk',sans-serif;font-size:9px;color:var(--g);opacity:.65;flex-shrink:0;width:18px;}
   .t-mo-tx{font-size:12px;color:var(--txm);line-height:1.9;}
-  .t-mo-tx a{color:var(--g);text-decoration:none;border-bottom:1px solid rgba(200,169,110,.3);}
+  .t-mo-tx a{color:var(--g);text-decoration:none;border-bottom:1px solid rgba(200,80,192,.3);}
   .t-mo-tx strong{color:var(--tx);}
-  .t-mo-note{background:var(--gg);border:1px solid rgba(200,169,110,.1);border-radius:2px;padding:11px 13px;font-size:10px;color:var(--txd);line-height:1.9;}
-  .t-mo-note strong{color:var(--g);}
+  .t-mo-note{background:var(--gg);border:1px solid rgba(200,80,192,.15);border-radius:8px;padding:11px 13px;font-size:10px;color:var(--txd);line-height:1.9;}
+  .t-mo-note strong{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
   .t-mo-f{padding:0 24px 24px;}
   ::-webkit-scrollbar{width:3px;}
   ::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
@@ -344,6 +340,7 @@ export default function App(){
   const[insertOk,setInsertOk]=useState<string|null>(null);
   const chatEndRef=useRef<HTMLDivElement|null>(null);
   useEffect(function(){if(chatEndRef.current)chatEndRef.current.scrollIntoView({behavior:"smooth"});},[chatDisplay]);
+  useEffect(function(){window.scrollTo({top:0,behavior:"smooth"});},[tab]);
 
   // ジャンル関連：モードに応じた情報を返す
   function getGenreObjs():Genre[]{
@@ -599,18 +596,18 @@ export default function App(){
     setLoading("");
   }
   function insertPattern(text:string,num:string){setChatInput(text);setInsertOk(num);setTimeout(function(){setInsertOk(null);},2000);setTab("generate");}
-  async function saveProject(){
+  function saveProject(){
     if(!pkey.trim()){setPst("err:プロジェクト名を入力してください");return;}
     const data=JSON.stringify({F,endings,genreMode,selectedGenres,customGenreName,customGenreKw,customGenreStyle,vocalGender,langRatio,vocalTexture,vocalRange,vocalOrigin,chordProg,bpm,targetAges,targetGender,metaphor,dual,structMode,parts,selKw,extraKw});
-    try{const r=await window.storage.set("tnp:"+pkey.trim(),data,true);setPst(r?"ok:「"+pkey.trim()+"」を保存しました":"err:保存に失敗しました");}
+    try{localStorage.setItem("mylyric:"+pkey.trim(),data);setPst("ok:「"+pkey.trim()+"」を保存しました");}
     catch(e){setPst("err:保存に失敗しました");}
   }
-  async function loadProject(){
+  function loadProject(){
     if(!pkey.trim()){setPst("err:プロジェクト名を入力してください");return;}
     try{
-      const r=await window.storage.get("tnp:"+pkey.trim(),true);
-      if(!r){setPst("err:プロジェクトが見つかりません");return;}
-      const d=JSON.parse(r.value) as Partial<{F:typeof initF;endings:string[];genreMode:string;selectedGenres:string[];customGenreName:string;customGenreKw:string;customGenreStyle:string;vocalGender:number;langRatio:number;vocalTexture:number|null;vocalRange:number|null;vocalOrigin:number|null;chordProg:number|null;bpm:number|null;targetAges:number[];targetGender:number|null;metaphor:number;dual:number;structMode:string;parts:Part[];selKw:string[];extraKw:string;}>;
+      const raw=localStorage.getItem("mylyric:"+pkey.trim());
+      if(!raw){setPst("err:プロジェクトが見つかりません");return;}
+      const d=JSON.parse(raw) as Partial<{F:typeof initF;endings:string[];genreMode:string;selectedGenres:string[];customGenreName:string;customGenreKw:string;customGenreStyle:string;vocalGender:number;langRatio:number;vocalTexture:number|null;vocalRange:number|null;vocalOrigin:number|null;chordProg:number|null;bpm:number|null;targetAges:number[];targetGender:number|null;metaphor:number;dual:number;structMode:string;parts:Part[];selKw:string[];extraKw:string;}>;
       if(d.F)setF(d.F);if(d.endings)setEndings(d.endings);if(d.genreMode)setGenreMode(d.genreMode);if(d.selectedGenres)setSelectedGenres(d.selectedGenres);
       if(d.customGenreName)setCustomGenreName(d.customGenreName);if(d.customGenreKw)setCustomGenreKw(d.customGenreKw);if(d.customGenreStyle)setCustomGenreStyle(d.customGenreStyle);
       if(d.vocalGender!==undefined)setVocalGender(d.vocalGender);if(d.langRatio!==undefined)setLangRatio(d.langRatio);
@@ -629,8 +626,8 @@ export default function App(){
   function Badge(props:{type:"req"|"rec"|"opt"}){const map:{[k:string]:string}={req:"必須",rec:"★ 推奨",opt:"任意"};return <span className={"t-badge "+props.type}>{map[props.type]}</span>;}
   const LAYERS:Layer[]=[
     {n:"LAYER 01",t:"事実を出す",h:"何があったか",qs:[
-      {l:"Q01",t:"この曲にしたい出来事を、一言で言うと？",n:"例：キャバのNo.1だった子を自分から手放してしまった話",k:"q01",r:2,badge:"req",bn:"テーマの軸。なければ歌詞の方向が定まらない。"},
-      {l:"Q02",t:"登場人物は誰？自分との関係性は？",n:"例：キャバクラNo.1の彼女、同棲してた彼氏がいた",k:"q02",r:3,badge:"rec",bn:"関係性が明確だと感情の対比が生まれ、歌詞の深みが増す。"},
+      {l:"Q01",t:"この曲にしたい出来事を、一言で言うと？",n:"例：ずっと好きだった人に、結局気持ちを伝えられなかった話",k:"q01",r:2,badge:"req",bn:"テーマの軸。なければ歌詞の方向が定まらない。"},
+      {l:"Q02",t:"登場人物は誰？自分との関係性は？",n:"例：幼なじみ、ずっと片思いしていた同級生",k:"q02",r:3,badge:"rec",bn:"関係性が明確だと感情の対比が生まれ、歌詞の深みが増す。"},
       {l:"Q03",t:"何があったか、時系列で箇条書きにすると？",n:"順番通りじゃなくてもいい",k:"q03",r:6,badge:"rec",bn:"ストーリーの骨格。Verse 1・2の流れに直接反映される。"},
     ]},
     {n:"LAYER 02",t:"場面の細部を出す",h:"具体的エピソード",qs:[
@@ -656,25 +653,38 @@ export default function App(){
 
           {welcome&&(
             <div className="t-ov"><div className="t-mo">
-              <div className="t-mo-top"><div className="t-mo-br">TN PRODUCE</div><div className="t-mo-t">はじめる前に<br/><em>準備が必要です</em></div><div className="t-mo-s">生成機能を使うにはClaudeアカウントが必要です。</div></div>
-              <div className="t-mo-b">
-                <div className="t-mo-step"><div className="t-mo-n">01</div><div className="t-mo-tx"><a href="https://claude.ai" target="_blank" rel="noopener noreferrer">claude.ai</a> にアクセスして<strong>無料アカウントを作成する</strong></div></div>
-                <div className="t-mo-step"><div className="t-mo-n">02</div><div className="t-mo-tx">スマートフォンは<strong>Claudeアプリをインストール</strong><br/><span style={{fontSize:"10px",color:"var(--txd)"}}>App Store / Google Play で「Claude」で検索</span></div></div>
-                <div className="t-mo-step"><div className="t-mo-n">03</div><div className="t-mo-tx">Claudeにログインした状態でこのアプリを開き<strong>CREATEタブから開始する</strong></div></div>
-                <div className="t-mo-note"><strong>無料プランでも全ての生成機能が使えます。</strong><br/>歌詞生成・修正チャット・タイトル・ひらがな変換・音楽生成AIプロンプト・クリップ設定はすべてアプリ内で完結します。</div>
+              <div className="t-mo-top">
+                <div className="t-mo-br">MY LYRIC</div>
+                <div className="t-mo-t">あなたの人生が、<br/><em>歌になる。</em></div>
+                <div className="t-mo-s" style={{fontSize:"13px",marginTop:"8px"}}>思い出や気持ちを、あなただけの歌にしよう。<br/><span style={{fontSize:"11px",opacity:.7}}>作詞経験ゼロでも大丈夫。</span></div>
               </div>
-              <div className="t-mo-f"><button className="t-btn t-btn-g" style={{width:"100%"}} onClick={function(){setWelcome(false);}}>Claudeは準備できてる → アプリを使う</button></div>
+              <div className="t-mo-b">
+                <div className="t-mo-step">
+                  <div className="t-mo-n" style={{background:"var(--grad)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontWeight:"700",fontFamily:"'Space Grotesk',sans-serif"}}>01</div>
+                  <div className="t-mo-tx"><strong>気持ちを入力する</strong><br/><span style={{fontSize:"10px",color:"var(--txd)"}}>質問に答えるだけで、あなたの想いを整理。</span></div>
+                </div>
+                <div className="t-mo-step">
+                  <div className="t-mo-n" style={{background:"var(--grad)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontWeight:"700",fontFamily:"'Space Grotesk',sans-serif"}}>02</div>
+                  <div className="t-mo-tx"><strong>歌詞とタイトルを生成する</strong><br/><span style={{fontSize:"10px",color:"var(--txd)"}}>あなたのストーリーを歌詞とタイトルに。</span></div>
+                </div>
+                <div className="t-mo-step">
+                  <div className="t-mo-n" style={{background:"var(--grad)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontWeight:"700",fontFamily:"'Space Grotesk',sans-serif"}}>03</div>
+                  <div className="t-mo-tx"><strong>曲づくりをサポート</strong><br/><span style={{fontSize:"10px",color:"var(--txd)"}}>音楽生成AI用のプロンプトまで自動で作成。</span></div>
+                </div>
+                <div className="t-mo-note" style={{borderRadius:"12px"}}><strong>恋愛・失恋・家族・夢・記念日</strong>など<br/>どんな想いも、あなただけの歌に。</div>
+              </div>
+              <div className="t-mo-f"><button className="t-btn t-btn-g" style={{width:"100%",padding:"14px",fontSize:"13px",borderRadius:"12px"}} onClick={function(){setWelcome(false);}}>はじめる →</button></div>
             </div></div>
           )}
 
           <nav className="t-nav">
-            <div className="t-brand">TN PRODUCE</div>
+            <div className="t-brand">MY LYRIC</div>
             <div className="t-tabs">{TABS.map(function(t){return <button key={t.id} className={"t-tab"+(tab===t.id?" on":"")} onClick={function(){setTab(t.id);}}>{t.label}</button>;})}</div>
           </nav>
 
           {tab==="create"&&(
             <div>
-              <div className="t-hero"><div className="t-eye">Song Creation — TN PRODUCE</div><h1 className="t-h1">感情を<em>曲に</em>する<br/>テンプレート</h1><p className="t-sub">素材を入力して設定を選ぶ。GENERATEタブで歌詞・プロンプトを生成。</p></div>
+              <div className="t-hero"><div className="t-eye">Song Creation — MY LYRIC</div><h1 className="t-h1">感情を<em>曲に</em>する<br/>テンプレート</h1><p className="t-sub">素材を入力して設定を選ぶ。GENERATEタブで歌詞・プロンプトを生成。</p></div>
 
               <div className="t-s">
                 <div className="t-sh"><span className="t-sn">PROJECT</span><span className="t-st">保存・共有</span></div>
@@ -761,7 +771,7 @@ export default function App(){
                             return <button key={g.id} className={"t-genre-btn"+(selectedGenres.includes(g.id)?" on":"")} onClick={function(){toggleGenre(g.id);}}>{g.name}</button>;
                           })}
                         </div>
-                        {selectedGenres.length>=3&&<div style={{fontSize:"10px",color:"var(--g)",marginTop:"6px",fontFamily:"'Space Mono',monospace"}}>最大3つまで選択できます</div>}
+                        {selectedGenres.length>=3&&<div style={{fontSize:"10px",color:"var(--g)",marginTop:"6px",fontFamily:"'Space Grotesk',sans-serif"}}>最大3つまで選択できます</div>}
                       </div>
                     )}
 
@@ -843,7 +853,7 @@ export default function App(){
 
           {tab==="generate"&&(
             <div>
-              <div className="t-hero"><div className="t-eye">AI Generation — TN PRODUCE</div><h1 className="t-h1">生成から完成まで<br/><em>アプリ内で完結</em></h1><p className="t-sub">STEP 0〜7をすべてこのタブで行う。外に出る必要なし。</p></div>
+              <div className="t-hero"><div className="t-eye">AI Generation — MY LYRIC</div><h1 className="t-h1">生成から完成まで<br/><em>アプリ内で完結</em></h1><p className="t-sub">STEP 0〜7をすべてこのタブで行う。外に出る必要なし。</p></div>
 
               <div className="t-s">
                 <div className="t-sh"><span className="t-sn">STEP 0</span><span className="t-st">テーマをAIと確認する</span><span className="t-sh2">精度を上げる最重要ステップ</span></div>
@@ -860,7 +870,7 @@ export default function App(){
                   <button className="t-btn t-btn-g" onClick={doLyric} disabled={!!loading}>{loading==="lyric"?"生成中...":"GENERATE LYRIC"}</button>
                   {(lyric||loading==="lyric")&&(
                     <div>
-                      <textarea readOnly value={lyric||(loading==="lyric"?"生成中...":"")} style={{minHeight:"280px",maxHeight:"400px",background:"rgba(200,169,110,0.04)",borderColor:"rgba(200,169,110,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
+                      <textarea readOnly value={lyric||(loading==="lyric"?"生成中...":"")} style={{minHeight:"280px",maxHeight:"400px",background:"rgba(200,80,192,0.04)",borderColor:"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
                       {lyric&&<button className={"t-btn "+(copyOk==="lyric"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(lyric,"lyric");}}>{copyLabel("lyric","通常の歌詞をコピーする（漢字あり）")}</button>}
                     </div>
                   )}
@@ -882,7 +892,7 @@ export default function App(){
                       <div className="t-chat">
                         <div className="t-chat-msgs">
                           {chatDisplay.length===0&&<div style={{fontSize:"11px",color:"var(--txd)",fontStyle:"italic"}}>診断後「全て修正して」または「〇〇だけ修正して」と入力してください。<br/>REVISEタブのINSERTでテンプレートを挿入できます。</div>}
-                          {chatDisplay.map(function(m,i){return <div key={i} className={"t-msg "+(m.role==="user"?"u":"a")}><div className="t-msg-who">{m.role==="user"?"YOU":"TN PRODUCE AI"}</div><div className="t-msg-body">{m.content}</div></div>;})}
+                          {chatDisplay.map(function(m,i){return <div key={i} className={"t-msg "+(m.role==="user"?"u":"a")}><div className="t-msg-who">{m.role==="user"?"YOU":"MY LYRIC AI"}</div><div className="t-msg-body">{m.content}</div></div>;})}
                           <div ref={chatEndRef}></div>
                         </div>
                         <div className="t-chat-in">
@@ -934,7 +944,7 @@ export default function App(){
                       <button className="t-btn t-btn-g" onClick={doHira} disabled={!!loading} style={{marginBottom:"8px"}}>{loading==="hira"?"変換中...":"ひらがな変換"}</button>
                       {hira&&(
                         <div>
-                          <textarea readOnly value={extractHira(hira)} style={{minHeight:"200px",maxHeight:"280px",background:"rgba(200,169,110,0.04)",borderColor:"rgba(200,169,110,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
+                          <textarea readOnly value={extractHira(hira)} style={{minHeight:"200px",maxHeight:"280px",background:"rgba(200,80,192,0.04)",borderColor:"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
                           <button className={"t-btn "+(copyOk==="hira"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(extractHira(hira),"hira");}}>{copyLabel("hira","ひらがな変換済み歌詞をコピーする")}</button>
                         </div>
                       )}
@@ -950,13 +960,13 @@ export default function App(){
                   <div className="t-info">設定したジャンル・ボーカル・言語・全設定が自動反映される。素材に合う他のジャンル提案も同時に出力される。</div>
                   <div className="t-br" style={{marginBottom:"8px"}}>
                     <button className="t-btn t-btn-g" onClick={doPrompt} disabled={!!loading}>{loading==="prompt"?"生成中...":"GENERATE PROMPT"}</button>
-                    {promptOut&&!promptOut.startsWith("エラー")&&<span style={{fontSize:"10px",fontFamily:"'Space Mono',monospace",color:getPromptOnly().length>1000?"var(--rd)":"var(--gr)"}}>{getPromptOnly().length}/1000文字</span>}
+                    {promptOut&&!promptOut.startsWith("エラー")&&<span style={{fontSize:"10px",fontFamily:"'Space Grotesk',sans-serif",color:getPromptOnly().length>1000?"var(--rd)":"var(--gr)"}}>{getPromptOnly().length}/1000文字</span>}
                   </div>
                   {(promptOut||loading==="prompt")&&(
                     <div>
-                      <textarea readOnly value={getPromptOnly()||(loading==="prompt"?"生成中...":"")} style={{minHeight:"140px",maxHeight:"220px",background:"rgba(200,169,110,0.04)",borderColor:getPromptOnly().length>1000?"rgba(200,126,126,0.4)":"rgba(200,169,110,0.2)",color:"var(--tx)",cursor:"text",fontFamily:"'Space Mono',monospace",fontSize:"11px",marginBottom:"8px"}}/>
+                      <textarea readOnly value={getPromptOnly()||(loading==="prompt"?"生成中...":"")} style={{minHeight:"140px",maxHeight:"220px",background:"rgba(200,80,192,0.04)",borderColor:getPromptOnly().length>1000?"rgba(224,85,85,0.4)":"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",fontFamily:"'Space Grotesk',sans-serif",fontSize:"11px",marginBottom:"8px"}}/>
                       {promptOut&&!promptOut.startsWith("エラー")&&<button className={"t-btn "+(copyOk==="prompt"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(getPromptOnly(),"prompt");}}>{copyLabel("prompt","音楽生成AIプロンプトをコピーする")}</button>}
-                      {getGenreSuggestion()&&<div className="t-out" style={{marginTop:"8px",fontSize:"11px",borderColor:"rgba(200,169,110,.15)"}}>{getGenreSuggestion()}</div>}
+                      {getGenreSuggestion()&&<div className="t-out" style={{marginTop:"8px",fontSize:"11px",borderColor:"rgba(200,80,192,.15)"}}>{getGenreSuggestion()}</div>}
                     </div>
                   )}
                 </div>
@@ -998,7 +1008,7 @@ export default function App(){
                   <button className="t-btn t-btn-g" onClick={doClipPrompt} disabled={!!loading||!promptOut||promptOut.startsWith("エラー")} style={{width:"100%",padding:"11px"}}>{loading==="clip"?"生成中...":"クリップ用プロンプトを生成する"}</button>
                   {clipPrompt&&(
                     <div>
-                      <textarea readOnly value={clipPrompt} style={{minHeight:"120px",maxHeight:"200px",background:"rgba(200,169,110,0.04)",borderColor:"rgba(200,169,110,0.2)",color:"var(--tx)",cursor:"text",fontFamily:"'Space Mono',monospace",fontSize:"11px",marginBottom:"8px"}}/>
+                      <textarea readOnly value={clipPrompt} style={{minHeight:"120px",maxHeight:"200px",background:"rgba(200,80,192,0.04)",borderColor:"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",fontFamily:"'Space Grotesk',sans-serif",fontSize:"11px",marginBottom:"8px"}}/>
                       <button className={"t-btn "+(copyOk==="clip"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(clipPrompt,"clip");}}>{copyLabel("clip","クリップ用プロンプトをコピーする")}</button>
                     </div>
                   )}
@@ -1023,7 +1033,7 @@ export default function App(){
                       <button className="t-btn t-btn-g" onClick={doWorldCard} disabled={!!loading} style={{marginBottom:"8px"}}>{loading==="world"?"生成中...":"世界観カードを生成する"}</button>
                       {worldCard&&(
                         <div>
-                          <textarea readOnly value={worldCard} style={{minHeight:"260px",maxHeight:"380px",background:"rgba(200,169,110,0.04)",borderColor:"rgba(200,169,110,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
+                          <textarea readOnly value={worldCard} style={{minHeight:"260px",maxHeight:"380px",background:"rgba(200,80,192,0.04)",borderColor:"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
                           <button className={"t-btn "+(copyOk==="world"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(worldCard,"world");}}>{copyLabel("world","世界観カードをコピーする")}</button>
                         </div>
                       )}
@@ -1041,7 +1051,7 @@ export default function App(){
 
           {tab==="keywords"&&(
             <div>
-              <div className="t-hero"><div className="t-eye">Extra Keywords — TN PRODUCE</div><h1 className="t-h1">追加キーワードで<br/><em>絞り込む</em></h1><p className="t-sub">CREATEのSETTINGSとジャンルの内容はすでにプロンプトに反映されている。ここで追加したいキーワードを選ぶ。どの音楽生成AIでも使える汎用キーワード。</p></div>
+              <div className="t-hero"><div className="t-eye">Extra Keywords — MY LYRIC</div><h1 className="t-h1">追加キーワードで<br/><em>絞り込む</em></h1><p className="t-sub">CREATEのSETTINGSとジャンルの内容はすでにプロンプトに反映されている。ここで追加したいキーワードを選ぶ。どの音楽生成AIでも使える汎用キーワード。</p></div>
               <div className="t-s">
                 <div className="t-sh"><span className="t-sn">EXTRA KEYWORDS</span><span className="t-st">追加キーワード</span><span className="t-sh2">{selKw.length}語選択中</span></div>
                 <div className="t-sb">
@@ -1061,7 +1071,7 @@ export default function App(){
 
           {tab==="revise"&&(
             <div>
-              <div className="t-hero"><div className="t-eye">Revision Guide — TN PRODUCE</div><h1 className="t-h1">修正の<em>伝え方</em></h1><p className="t-sub">INSERTを押すとGENERATEタブのチャットにテンプレートが入力される。</p></div>
+              <div className="t-hero"><div className="t-eye">Revision Guide — MY LYRIC</div><h1 className="t-h1">修正の<em>伝え方</em></h1><p className="t-sub">INSERTを押すとGENERATEタブのチャットにテンプレートが入力される。</p></div>
               {REVISE_PATTERNS.map(function(p){return (
                 <div className="t-pat" key={p.num}>
                   <div className="t-pat-h"><span className="t-pat-n">PATTERN {p.num}</span><span className="t-pat-t">{p.title}</span></div>
@@ -1073,7 +1083,7 @@ export default function App(){
 
           {tab==="check"&&(
             <div>
-              <div className="t-hero"><div className="t-eye">Checklist & Guide — TN PRODUCE</div><h1 className="t-h1">完成度チェック<br/><em>＆ ガイド</em></h1><p className="t-sub">制作前後のチェックリストとアプリの使い方ガイド。</p></div>
+              <div className="t-hero"><div className="t-eye">Checklist & Guide — MY LYRIC</div><h1 className="t-h1">完成度チェック<br/><em>＆ ガイド</em></h1><p className="t-sub">制作前後のチェックリストとアプリの使い方ガイド。</p></div>
 
               <div className="t-s">
                 <div className="t-sh"><span className="t-sn">GUIDE</span><span className="t-st">使い方ガイド</span></div>
@@ -1087,7 +1097,7 @@ export default function App(){
                     {h:"ジャンルの決め方",t:"3つのモードがある。\n①AIにおまかせ：素材から最適なジャンルをAIが判断（ジャンルがわからない人はこれ）\n②選んで決める：複数選択可。選んだ順に主従が決まり、掛け合わせて生成する（例：シティポップ主×R&B従）\n③カスタム入力：ジャンル名とキーワードを自由に指定\n選ばなくてもAIにおまかせで生成できる。"},
                     {h:"詳細設定について",t:"CREATEのSETTINGS内「詳細設定を開く」の中にある項目は全て任意。選ばなくてもAIが補完するが、選ぶほど意図に近い出力になる。選んだ内容は歌詞・音楽生成AIプロンプト・最終チェックの全てに反映される。"},
                     {h:"コピーについて",t:"歌詞・音楽生成AIプロンプト・ひらがな変換済み歌詞はそれぞれ専用のコピーボタンがある。コピーしたテキストには余計な説明文は含まれず、そのまま各AIに貼り付けて使える。"},
-                    {h:"プロジェクトの共有について",t:"プロジェクト名を相手に教えてLOADしてもらうと入力内容を丸ごと共有できる。共同制作や、作業の続きを別デバイスで行う際に使う。共有にはClaudeアカウントが必要。"},
+                    {h:"プロジェクトの共有について",t:"プロジェクト名を相手に教えてLOADしてもらうと入力内容を丸ごと共有できる。共同制作や、作業の続きを別デバイスで行う際に使う。共有には同じプロジェクト名を使う。"},
                   ].map(function(item,i){return (
                     <div key={i} className="t-guide-item"><div className="t-guide-h">{item.h}</div><div className="t-guide-txt">{item.t}</div></div>
                   );})}
