@@ -221,12 +221,7 @@ const BLEND_MAP = [
 ];
 
 const MUSIC_AI_OPTS = ["Suno","Udio","その他"];
-const SUNO_PLAN_OPTS = ["無料","有料（Pro/Premier）"];
-// Suno文字数上限
-const SUNO_LIMITS = {
-  free:  {lyrics:3000, style:200,  title:100},
-  paid:  {lyrics:5000, style:1000, title:100},
-};
+const STYLE_LIMIT_OPTS = [200, 300, 500, 700, 1000];
 // Udio：文字数制限なし（詳細プロンプト推奨）
 
 const TABS:{id:string;label:string}[]=[{id:"create",label:"CREATE"},{id:"generate",label:"GENERATE"},{id:"keywords",label:"KEYWORDS"},{id:"revise",label:"REVISE"},{id:"check",label:"CHECK"}];
@@ -380,7 +375,7 @@ export default function App(){
   const[worldRevise,setWorldRevise]=useState("");
   // 音楽生成AI選択
   const[musicAI,setMusicAI]=useState("suno");
-  const[sunoplan,setSunoPlan]=useState("free");
+  const[styleLimit,setStyleLimit]=useState(300);
   const chatEndRef=useRef<HTMLDivElement|null>(null);
   useEffect(function(){if(chatEndRef.current)chatEndRef.current.scrollIntoView({behavior:"smooth"});},[chatDisplay]);
   useEffect(function(){window.scrollTo({top:0,behavior:"smooth"});},[tab]);
@@ -473,6 +468,7 @@ export default function App(){
     setStructMode("basic");setParts(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
     setConfirmedLocked(false);setLyricLocked(false);setPromptLocked(false);setWorldLocked(false);
     setLyricDiagCount(0);setPromptDiagCount(0);setConfirmRevise("");setWorldRevise("");
+    setMusicAI("suno");setStyleLimit(300);
   }
   function buildMaterial(){
     const qs=[["この曲を一言で言うと",F.q01],["登場人物と関係性",F.q02],["出来事の流れ",F.q03],["一番鮮明な場面",F.q04],["届いた言葉・メッセージ",F.q05],["2人だけが知ってるもの",F.q06],["言えなかった言葉",F.q07],["表向きの感情",F.q08],["本当の感情",F.q09],["今も続く感情",F.q10],["相手への気持ち",F.q11],["この曲の核心",F.q12]];
@@ -535,19 +531,16 @@ export default function App(){
     return"あなたは音楽生成AIプロンプトの専門エンジニアとして最終診断を行います。診断のみ行う。修正は絶対に行わない。\n\n【制作設定】\n"+settings+"\n【"+musicAI.toUpperCase()+" / "+limitNote+"】\n\n審査項目：\n・文字数は上限内か（文字数を明記）\n・ジャンル（"+g.name+"）のキーワードが適切に含まれているか\n・ボーカル設定が含まれているか\n・感情・雰囲気・楽器・空気感のバランス\n・重複・矛盾するキーワードがないか\n・設定した内容との整合性\n\n出力形式（必ず守る）：\n\n🚨 致命的な問題（文字数超過・ジャンルキーワード欠如・矛盾する設定など）:\n・〇〇（なければ「なし」と記載）\n\n⚠️ 軽微な問題（キーワードの順序・細かい調整など任意）:\n・〇〇（なければ「なし」と記載）\n\n✅ 問題なし項目:\n・〇〇\n\n致命的な問題がない場合は最後に「完成度は十分です。」と明記する。";
   }
   function getStyleLimit(){
-    if(musicAI==="suno") return sunoplan==="free"?SUNO_LIMITS.free.style:SUNO_LIMITS.paid.style;
-    return 99999; // Udio・その他は制限なし
-  }
-  function getLyricsLimit(){
-    if(musicAI==="suno") return sunoplan==="free"?SUNO_LIMITS.free.lyrics:SUNO_LIMITS.paid.lyrics;
-    return 99999;
+    if(musicAI==="udio") return 99999;
+    return styleLimit;
   }
   function buildPromptSys(){
     const kw=getGenrePromptKw();
     const styleLimit=getStyleLimit();
-    const limitNote=musicAI==="suno"?`・スタイルプロンプトは${styleLimit}文字以内（超えるとSunoが無言で切り捨てる）・最重要キーワードを先頭に配置する`
-      :musicAI==="udio"?"・Udoは文字数制限なし・詳細で多層的なプロンプトが高品質な出力につながる・ジャンル・ムード・楽器・テンポを詳しく記述する"
-      :"・使用する音楽生成AIの文字数制限に合わせて調整する";
+    const limit=getStyleLimit();
+    const limitNote=musicAI==="udio"
+      ?"・Udoは文字数制限なし・詳細で多層的なプロンプトが高品質な出力につながる・ジャンル・ムード・楽器・テンポを詳しく記述する"
+      :`・出力は絶対に${limit}文字以内にすること・${limit}文字を超えた場合は重要度の低いキーワードを削除して必ず${limit}文字以内に収めること・最重要キーワード（ジャンル・ボーカル）を先頭に配置する`;
     let genreLine="";
     if(genreMode==="auto")genreLine="ジャンル：素材に最適なジャンルをAIが判断して選ぶ";
     else genreLine="ジャンル："+getGenreName()+(kw?"\n音楽生成AIキーワード："+kw:"");
@@ -634,7 +627,32 @@ export default function App(){
     setLoading("prompt");setPromptOut("");setPromptDiag("");setPromptDiagCount(0);
     const g=getGenre();const kws=buildPromptKw();
     const userMsg="以下の情報から"+g.name+"の最高の音楽生成AIプロンプトを英語で生成してください。\n\n【素材の要約】\n"+buildMaterial()+"【制作設定】\n"+buildSettings()+"\n【使用するキーワード（必ず含める）】\n"+kws+"\n\nまた、この素材に合う他のジャンルも2〜3個提案があれば、プロンプトの後に「---ジャンル提案---」として1行ずつ記載してください。";
-    try{await callAI(buildPromptSys(),[{role:"user",content:userMsg}],function(r){setPromptOut(r);});setPromptLocked(true);}catch(e){setPromptOut("エラー: "+(e instanceof Error?e.message:String(e)));}
+    try{
+      await callAI(buildPromptSys(),[{role:"user",content:userMsg}],function(r){
+        // 自動トリミング：文字数上限を超えていたらカンマ区切りで後ろから削除
+        const limit=getStyleLimit();
+        if(limit<99999){
+          const sep=r.indexOf("---");
+          const promptPart=sep>0?r.slice(0,sep).trim():r;
+          const rest=sep>0?r.slice(sep):"";
+          if(promptPart.length>limit){
+            const parts=promptPart.split(",").map(function(p){return p.trim();}).filter(Boolean);
+            let trimmed="";
+            for(let i=0;i<parts.length;i++){
+              const candidate=trimmed?trimmed+", "+parts[i]:parts[i];
+              if(candidate.length<=limit)trimmed=candidate;
+              else break;
+            }
+            setPromptOut(trimmed+(rest?" "+rest:""));
+          }else{
+            setPromptOut(r);
+          }
+        }else{
+          setPromptOut(r);
+        }
+      });
+      setPromptLocked(true);
+    }catch(e){setPromptOut("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
   }
   async function doPromptDiag(){
@@ -1077,14 +1095,15 @@ export default function App(){
                         {MUSIC_AI_OPTS.map(function(ai,i){const val=["suno","udio","other"][i];return <div key={i} className={"t-seg-o"+(musicAI===val?" on":"")} onClick={function(){setMusicAI(val);}}>{ai}</div>;})}
                       </div>
                     </div>
-                    {musicAI==="suno"&&(
+                    {musicAI!=="udio"&&(
                       <div>
-                        <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"4px",letterSpacing:".05em"}}>Sunoプラン（文字数上限が変わります）</div>
+                        <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"4px",letterSpacing:".05em"}}>スタイルプロンプトの文字数上限</div>
                         <div className="t-seg">
-                          {SUNO_PLAN_OPTS.map(function(p,i){const val=["free","paid"][i];return <div key={i} className={"t-seg-o"+(sunoplan===val?" on":"")} onClick={function(){setSunoPlan(val);}}>{p}</div>;})}
+                          {STYLE_LIMIT_OPTS.map(function(n){return <div key={n} className={"t-seg-o"+(styleLimit===n?" on":"")} onClick={function(){setStyleLimit(n);}}>{n}字</div>;})}
                         </div>
                         <div style={{fontSize:"10px",color:"var(--txd)",marginTop:"4px"}}>
-                          スタイル上限：{sunoplan==="free"?"200文字（無料）":"1,000文字（有料）"} ／ 歌詞上限：{sunoplan==="free"?"3,000文字":"5,000文字"}
+                          ※お使いの音楽生成AIやプランによって最適な文字数が異なります。<br/>
+                          Suno無料：200〜300文字推奨　Suno有料（v5）：最大1,000文字　Udio：制限なし
                         </div>
                       </div>
                     )}
