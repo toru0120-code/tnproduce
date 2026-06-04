@@ -204,7 +204,7 @@ const GENRES: Genre[] = [
   {id:"custom",name:"カスタム",sunoKw:"",lyricStyle:"",checkKw:""},
 ];
 
-// ブレンド対応表（ジャンル早見表・AIも参照）
+// ミックス対応表（ジャンル早見表・AIも参照）
 const BLEND_MAP = [
   {name:"ネオシティポップ",blend:["jpop","rnb"],promptKw:"modern city pop, neo soul, jazzy"},
   {name:"ローファイ",blend:["rnb","acoustic"],promptKw:"lofi hip hop, chill, nostalgic"},
@@ -1044,7 +1044,7 @@ export default function App(){
                     <div>
                       <div className="t-br" style={{marginBottom:"12px"}}>
                         <button className="t-btn t-btn-g" onClick={doTitle} disabled={!!loading}>{loading==="title"?"生成中...":"GENERATE TITLE"}</button>
-                        {titleParsed.length>0&&<button className="t-btn t-btn-gh" onClick={doTitle} disabled={!!loading}>新しい提案をお願いする</button>}
+                        
                       </div>
                       {titleMode==="generated"&&titleParsed.length>0&&(
                         <div>
@@ -1071,7 +1071,7 @@ export default function App(){
                   ):(
                     <div>
                       <div className="t-info" style={{marginBottom:"8px"}}>音楽生成AIが読み間違いやすい漢字をひらがなに変換する。海外製のAIは特に読み間違いが多いのでどのツールでも有効。<strong>音数は変わらない</strong>ように処理される。</div>
-                      <button className="t-btn t-btn-g" onClick={doHira} disabled={!!loading} style={{marginBottom:"8px"}}>{loading==="hira"?"変換中...":"ひらがな変換"}</button>
+                      <button className="t-btn t-btn-g" onClick={doHira} disabled={!!loading} style={{marginBottom:"8px"}}>{loading==="hira"?"変換中...":hira?"再変換する":"ひらがな変換"}</button>
                       {hira&&(
                         <div>
                           <textarea readOnly value={extractHira(hira)} style={{minHeight:"200px",maxHeight:"280px",background:"rgba(200,80,192,0.04)",borderColor:"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
@@ -1288,13 +1288,13 @@ export default function App(){
                   </div>
 
                   <div className="t-s">
-                    <div className="t-sh"><span className="t-sn">BLEND GUIDE</span><span className="t-st">ジャンルブレンド早見表</span></div>
+                    <div className="t-sh"><span className="t-sn">GENRE MIX</span><span className="t-st">ジャンルミックス一覧表</span></div>
                     <div className="t-sb">
-                      <div className="t-info">カスタムモードで複数ジャンルをブレンドする際の参考にしてください。</div>
+                      <div className="t-info">ジャンルをミックスしたい場合の参考にしてください。</div>
                       {BLEND_MAP.map(function(b,i){return(
                         <div key={i} className="t-guide-item">
                           <div className="t-guide-h">{b.name}</div>
-                          <div className="t-guide-txt">{b.blend.join(" × ")} でブレンド<br/><span style={{fontSize:"10px",color:"var(--txd)"}}>キーワード: {b.promptKw}</span></div>
+                          <div className="t-guide-txt">{b.blend.join(" × ")} でミックス<br/><span style={{fontSize:"10px",color:"var(--txd)"}}>キーワード: {b.promptKw}</span></div>
                         </div>
                       );})}
                     </div>
