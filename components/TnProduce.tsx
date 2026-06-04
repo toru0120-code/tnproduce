@@ -485,6 +485,8 @@ export default function App(){
     setOwnLyric("");
     setLyricDiagCount(0);setPromptDiagCount(0);setConfirmRevise("");setWorldRevise("");
     setMusicAI("suno");setStyleLimit(300);
+    setLyricDiagCount(0);setPromptDiagCount(0);setConfirmRevise("");setWorldRevise("");
+    setMusicAI("suno");setStyleLimit(300);
   }
   // Q01が空かチェック
   function isQ01Empty(){return !F.q01.trim();}
@@ -739,20 +741,20 @@ export default function App(){
   }
   async function doWorldCard(revise?:string){
     const mat=buildMaterial();if(!mat.trim()){alert("先にCREATEタブで素材を入力してください");return;}
-    if(!lyric){alert("先に歌詞を生成してください");return;}
+    if(!getActiveLyric()){alert("先に歌詞を生成するか、既存の歌詞を入力してください");return;}
     if(worldLocked&&!revise){if(!window.confirm("世界観カードを再生成します。続けますか？"))return;}
     setLoading("world");setWorldCard("");
     const titleLine=(titleMode==="custom"?customTitle:selectedTitle)||"（未設定）";
     const sys="あなたはプロのアートディレクター兼作詞家です。曲の世界観を、画像・映像制作にそのまま使える形で言語化します。\n出力形式（この形式のみ・前置きや説明は禁止）：\n\nタイトル：（曲のタイトル）\n\nテーマ：\n（曲の核心を2行以内で）\n\n感情・雰囲気：\n（・区切りで5個程度）\n\n色調イメージ：\n（・区切りで具体的な色や光の情景を5個程度）\n\nシーンイメージ：\n（・区切りで映像に使える場面を5個程度）\n\nキーワード（英語）：\n（画像・映像生成にそのまま使える英語キーワードをカンマ区切りで10〜15個）";
     const reviseNote=revise?"\n\n【修正指示】\n"+revise:"";
-    const userMsg="以下の素材・歌詞・設定から曲の世界観カードを作成してください。\n\n【タイトル】\n"+titleLine+"\n\n【素材】\n"+mat+"\n【制作設定】\n"+buildSettings()+"\n【歌詞】\n"+lyric+reviseNote;
+    const userMsg="以下の素材・歌詞・設定から曲の世界観カードを作成してください。\n\n【タイトル】\n"+titleLine+"\n\n【素材】\n"+mat+"\n【制作設定】\n"+buildSettings()+"\n【歌詞】\n"+getActiveLyric()+reviseNote;
     try{await callAI(sys,[{role:"user",content:userMsg}],function(r){setWorldCard(r);},2000);setWorldLocked(true);}catch(e){setWorldCard("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
   }
   function insertPattern(text:string,num:string){setChatInput(text);setInsertOk(num);setTimeout(function(){setInsertOk(null);},2000);setTab("generate");}
   function saveProject(){
     if(!pkey.trim()){setPst("err:プロジェクト名を入力してください");return;}
-    const data=JSON.stringify({F,endings,genreMode,selectedGenres,customGenreName,customGenreKw,customGenreStyle,vocalGender,langRatio,vocalTexture,vocalRange,vocalOrigin,chordProg,bpm,targetAges,targetGender,metaphor,dual,structMode,parts,selKw,extraKw});
+    const data=JSON.stringify({F,endings,genreMode,selectedGenres,customGenreName,customGenreKw,customGenreStyle,vocalGender,langRatio,vocalTexture,vocalRange,vocalOrigin,chordProg,bpm,targetAges,targetGender,metaphor,dual,structMode,parts,selKw,extraKw,ownLyric});
     try{localStorage.setItem("mylyric:"+pkey.trim(),data);setPst("ok:「"+pkey.trim()+"」を保存しました");}
     catch(e){setPst("err:保存に失敗しました");}
   }
@@ -761,8 +763,9 @@ export default function App(){
     try{
       const raw=localStorage.getItem("mylyric:"+pkey.trim());
       if(!raw){setPst("err:プロジェクトが見つかりません");return;}
-      const d=JSON.parse(raw) as Partial<{F:typeof initF;endings:string[];genreMode:string;selectedGenres:string[];customGenreName:string;customGenreKw:string;customGenreStyle:string;vocalGender:number;langRatio:number;vocalTexture:number|null;vocalRange:number|null;vocalOrigin:number|null;chordProg:number|null;bpm:number|null;targetAges:number[];targetGender:number|null;metaphor:number;dual:number;structMode:string;parts:Part[];selKw:string[];extraKw:string;}>;
+      const d=JSON.parse(raw) as Partial<{F:typeof initF;endings:string[];genreMode:string;selectedGenres:string[];customGenreName:string;customGenreKw:string;customGenreStyle:string;vocalGender:number;langRatio:number;vocalTexture:number|null;vocalRange:number|null;vocalOrigin:number|null;chordProg:number|null;bpm:number|null;targetAges:number[];targetGender:number|null;metaphor:number;dual:number;structMode:string;parts:Part[];selKw:string[];extraKw:string;ownLyric:string;}>;
       if(d.F)setF(d.F);if(d.endings)setEndings(d.endings);if(d.genreMode)setGenreMode(d.genreMode);if(d.selectedGenres)setSelectedGenres(d.selectedGenres);
+      if(d.ownLyric!==undefined)setOwnLyric(d.ownLyric);
       if(d.customGenreName)setCustomGenreName(d.customGenreName);if(d.customGenreKw)setCustomGenreKw(d.customGenreKw);if(d.customGenreStyle)setCustomGenreStyle(d.customGenreStyle);
       if(d.vocalGender!==undefined)setVocalGender(d.vocalGender);if(d.langRatio!==undefined)setLangRatio(d.langRatio);
       if(d.vocalTexture!==undefined)setVocalTexture(d.vocalTexture);if(d.vocalRange!==undefined)setVocalRange(d.vocalRange);
@@ -1424,8 +1427,8 @@ export default function App(){
           {tab==="revise"&&(
             <div>
               <div className="t-hero"><div className="t-eye">Revision Guide — MY LYRIC</div><h1 className="t-h1">修正の<em>伝え方</em></h1><p className="t-sub">歌詞を生成後、INSERTを押してGENERATEタブのチャットにテンプレートを挿入する。</p></div>
-              {!lyric?(
-                <div className="t-info">先にGENERATEタブで歌詞を生成してください。</div>
+              {!getActiveLyric()?(
+                <div className="t-info">先にGENERATEタブで歌詞を生成するか、既存の歌詞を入力してください。</div>
               ):(
                 <div>
                   {REVISE_PATTERNS.map(function(p){return (
@@ -1447,14 +1450,13 @@ export default function App(){
                 <div className="t-sh"><span className="t-sn">GUIDE</span><span className="t-st">使い方ガイド</span></div>
                 <div className="t-sb" style={{gap:"0",padding:"8px 16px"}}>
                   {[
-                    {h:"🔑 Q01（特別必須）について",t:"Q01が空欄の場合はGENERATEが動きません。テーマが決まらないと歌詞の方向が定まらないため、最初に必ず入力してください。"},
+                    {h:"🔑 Q01（特別必須）について",t:"Q01が空欄の場合はGENERATEが動きません。テーマが決まらないと歌詞の方向が定まらないため、最初に必ず入力してください。\nまた10文字未満の場合は警告が表示されます。「どう感じたか」も一緒に入力すると精度が大きく上がります。\n例：「好きだった人に振られて悔しい」"},
+                    {h:"既存の歌詞を使う場合",t:"STEP1の既存の歌詞欄に歌詞を入力すると、Q01が空でもSTEP2〜7が全て使えます。\n・歌詞の最終チェック・診断\n・タイトル生成\n・ひらがな変換\n・プロンプト生成\n・世界観カード\nGENERATE LYRICは既存の歌詞がある場合は使えません。"},
                     {h:"必須とは（Q12・ENDING・ボーカル性別）",t:"空欄のまま生成しようとすると警告が表示されます。「CREATEに戻って入力する」か「このまま生成する」を選べます。入力することで歌詞の品質が大きく上がります。"},
                     {h:"推奨とは",t:"できれば入力してほしい項目です。入力するほど歌詞のリアリティと深みが増します。"},
                     {h:"任意とは",t:"こだわりたい人向けの項目です。空欄でもAIが最適な判断をします。"},
-                    {h:"推奨とは",t:"あるとクオリティが大きく上がる項目。できるだけ入力することを強くすすめる。入れるほど歌詞の精度が上がる。\n対象：Q02・Q03・Q04・Q06・Q09・言語の割合"},
-                    {h:"任意とは",t:"個性や方向性をさらに絞り込む項目。こだわりたい人が使う。選ばなければAIが補完する。\n対象：Q05・Q07・Q08・Q10・Q11・詳細設定の全項目"},
                     {h:"曲の構成用語について",t:"Verse（バース）＝ Aメロ：物語の導入部分\nPre-Chorus（プリコーラス）＝ Bメロ：サビへの橋渡し\nChorus（コーラス）＝ サビ：曲のメインフレーズ\nBridge（ブリッジ）＝ Cメロ：展開・転換部分\nLast Chorus（ラストコーラス）＝ 大サビ：最後のクライマックス\nOutro（アウトロ）＝ エンディング：曲の締め\nIntro Chorus ＝ 冒頭にサビを持ってくる演出\n\n※Aメロ・Bメロ・サビ・Cメロは日本での呼び方です。"},
-                    {h:"制作フロー",t:"STEP 0: テーマをAIと確認（ズレがないか）\nSTEP 1: 歌詞を生成\nSTEP 2: 2段階チェック（STAGE 1診断→STAGE 2修正）\nSTEP 3: タイトルを決める（再生成・自作も可）\nSTEP 4: ひらがな変換\nSTEP 5: 音楽生成AIプロンプトを生成（ジャンル提案も同時出力）\nSTEP 6: プロンプト最終チェック・クリップ設定\nSTEP 7: 曲の世界観カード（画像・映像制作用）"},
+                    {h:"制作フロー",t:"STEP 0: テーマをAIと確認（ズレがないか）\nSTEP 1: 歌詞を生成（または既存の歌詞を入力）\nSTEP 2: 2段階チェック（STAGE 1診断→STAGE 2修正）\nSTEP 3: タイトルを決める（再生成・自作も可）\nSTEP 4: ひらがな変換\nSTEP 5: 音楽生成AIプロンプトを生成（ジャンル提案も同時出力）\nSTEP 6: プロンプト最終チェック・クリップ設定\nSTEP 7: 曲の世界観カード（画像・映像制作用）"},
                     {h:"2段階チェックについて",t:"STAGE 1では問題点のリストアップのみ行う（修正しない）。診断レポートを見て、全部直すか特定の項目だけ直すかをSTAGE 2で指示する。これにより意図しない変更を防ぐ。"},
                     {h:"ジャンルの決め方",t:"3つのモードがある。\n①AIにおまかせ：素材から最適なジャンルをAIが判断（ジャンルがわからない人はこれ）\n②選んで決める：複数選択可。選んだ順に主従が決まり、掛け合わせて生成する（例：シティポップ主×R&B従）\n③カスタム入力：ジャンル名とキーワードを自由に指定\n選ばなくてもAIにおまかせで生成できる。"},
                     {h:"詳細設定について",t:"CREATEのSETTINGS内「詳細設定を開く」の中にある項目は全て任意。選ばなくてもAIが補完するが、選ぶほど意図に近い出力になる。選んだ内容は歌詞・音楽生成AIプロンプト・最終チェックの全てに反映される。"},
