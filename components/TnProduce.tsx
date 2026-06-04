@@ -7,7 +7,7 @@ type LayerQ = {
   n: string;
   k: string;
   r: number;
-  badge: "req" | "rec" | "opt";
+  badge: "req" | "rec" | "opt" | "req-special";
   bn: string;
 };
 type Layer = {
@@ -145,6 +145,7 @@ const S = `
   .t-tip-m{color:var(--g);font-family:'Space Grotesk',sans-serif;font-size:8px;opacity:.55;flex-shrink:0;margin-top:3px;}
   .t-badge{display:inline-flex;align-items:center;font-family:'Space Grotesk',sans-serif;font-size:8px;letter-spacing:.08em;padding:3px 8px;border-radius:20px;margin-bottom:4px;font-weight:600;}
   .t-badge.req{color:#ff80b5;background:rgba(255,128,181,.1);border:1px solid rgba(255,128,181,.3);}
+ .t-badge.req-special{color:#e8c862;background:rgba(232,200,98,.12);border:1px solid rgba(232,200,98,.35);font-weight:700;}
   .t-badge.rec{color:#9ec8a0;background:rgba(158,200,160,.1);border:1px solid rgba(158,200,160,.25);}
   .t-badge.opt{color:var(--txd);background:rgba(255,255,255,.03);border:1px solid var(--bd);}
   .t-badge-note{font-size:10px;color:var(--txd);line-height:1.7;letter-spacing:.04em;margin-bottom:6px;}
@@ -372,6 +373,8 @@ export default function App(){
   const[clipPrompt,setClipPrompt]=useState("");
   const[copyOk,setCopyOk]=useState("");
   const[insertOk,setInsertOk]=useState<string|null>(null);
+  const[ownLyric,setOwnLyric]=useState("");
+  const[missingModal,setMissingModal]=useState<{items:string[];onProceed:()=>void}|null>(null);
   // 診断カウンター
   const[lyricDiagCount,setLyricDiagCount]=useState(0);
   const[promptDiagCount,setPromptDiagCount]=useState(0);
@@ -478,8 +481,20 @@ export default function App(){
     setChordProg(null);setBpm(null);setTargetAges([]);setTargetGender(null);setMetaphor(0);setDual(0);
     setStructMode("basic");setParts(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
     setConfirmedLocked(false);setTitleLocked(false);setLyricLocked(false);setPromptLocked(false);setWorldLocked(false);
+    setOwnLyric("");
     setLyricDiagCount(0);setPromptDiagCount(0);setConfirmRevise("");setWorldRevise("");
     setMusicAI("suno");setStyleLimit(300);
+  }
+  // Q01が空かチェック
+  function isQ01Empty(){return !F.q01.trim();}
+  function canGenerate(){return !isQ01Empty()||ownLyric.trim().length>0;}
+  function getActiveLyric(){return ownLyric.trim()||lyric;}
+  // その他必須が空かチェック（Q12・ENDING・ボーカル性別）
+  function getMissingRequired(){
+    const missing=[];
+    if(!F.q12.trim())missing.push("Q12（この曲の核心・一文）");
+    if(endings.length===0)missing.push("ENDING（終わり方）");
+    return missing;
   }
   function buildMaterial(){
     const qs=[["この曲を一言で言うと",F.q01],["登場人物と関係性",F.q02],["出来事の流れ",F.q03],["一番鮮明な場面",F.q04],["届いた言葉・メッセージ",F.q05],["2人だけが知ってるもの",F.q06],["言えなかった言葉",F.q07],["表向きの感情",F.q08],["本当の感情",F.q09],["今も続く感情",F.q10],["相手への気持ち",F.q11],["この曲の核心",F.q12]];
@@ -560,6 +575,7 @@ export default function App(){
   function getPromptOnly(){const sep=promptOut.indexOf("---");return sep>0?promptOut.slice(0,sep).trim():promptOut;}
   function getGenreSuggestion(){const sep=promptOut.indexOf("---ジャンル提案---");return sep>0?promptOut.slice(sep):"";} 
   async function doConfirm(revise?:string){
+    if(!canGenerate()){alert("Q01またはSTEP1の自前歌詞を入力してください。");return;}
     const mat=buildMaterial();if(!mat.trim()){alert("CREATEタブで素材を入力してください");return;}
     setLoading("confirm");setConfirmed("");
     const sys="あなたはプロの作詞家です。ユーザーが送った曲の素材を読んで、以下を日本語で返してください。\n1.「この曲の核心」を一文で言語化する\n2.「感情の流れ」を3段階で整理する（始まり→変化→結末）\n3. 確認したい点があれば1〜2個質問する\n形式：\n【核心】〇〇\n【感情の流れ】〇〇→〇〇→〇〇\n【確認】〇〇";
@@ -568,8 +584,18 @@ export default function App(){
     setLoading("");
   }
   async function doLyric(){
+    if(!canGenerate()){alert("Q01またはSTEP1の自前歌詞を入力してください。");return;}
+    const missing=getMissingRequired();
+    if(missing.length>0){
+      setMissingModal({items:missing,onProceed:function(){setMissingModal(null);doLyricCore();}});
+      return;
+    }
     const mat=buildMaterial();if(!mat.trim()){alert("CREATEタブで素材を入力してください");return;}
     if(lyricLocked){if(!window.confirm("歌詞を再生成すると現在の歌詞・診断履歴が全て消えます。本当に再生成しますか？"))return;}
+    doLyricCore();
+  }
+  async function doLyricCore(){
+    const mat=buildMaterial();
     setLoading("lyric");setLyric("");setLyricHistory([]);setChatDisplay([]);setLyricDiagnosis("");setWorldCard("");setLyricDiagCount(0);
     const userMsg="以下の素材と設定から歌詞を作成してください。\n\n"+mat+"\n【制作設定】\n"+buildSettings();
     try{
@@ -619,25 +645,27 @@ export default function App(){
   }
   function handleKey(e:React.KeyboardEvent<HTMLTextAreaElement>){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();}}
   async function doTitle(){
-    if(!lyric){alert("先に歌詞を生成してください");return;}
+    if(!getActiveLyric()){alert("先に歌詞を生成するか、自前歌詞を入力してください");return;}
     setLoading("title");setTitleParsed([]);setSelectedTitle("");setTitleMode("generated");
     const sys="あなたはプロの作詞家です。歌詞のタイトル候補を3つ出してください。\n1. 日本語タイトル\n2. 英語タイトル\n3. 日英ミックスタイトル（例：夜の蝶 / A Love Story）\nそれぞれ1行ずつ、番号付きで出力してください。タイトルの値のみで説明不要。";
-    try{let r="";await callAI(sys,[{role:"user",content:"以下の歌詞のタイトル候補を出してください。\n\n"+lyric}],function(res){r=res;});setTitleParsed(parseTitles(r));setTitleLocked(true);}
+    try{let r="";await callAI(sys,[{role:"user",content:"以下の歌詞のタイトル候補を出してください。\n\n"+getActiveLyric()}],function(res){r=res;});setTitleParsed(parseTitles(r));setTitleLocked(true);}
     catch(e){setTitleParsed([{label:"エラー",value:e instanceof Error?e.message:String(e)}]);}
     setLoading("");
   }
   async function doHira(){
-    if(!lyric){alert("先に歌詞を生成してください");return;}
+    if(!getActiveLyric()){alert("先に歌詞を生成するか、自前歌詞を入力してください");return;}
     setLoading("hira");setHira("");
     const sys="あなたはプロの作詞家です。歌詞の漢字をひらがなに変換してください。\n\n変換ルール：\n・音読み・訓読みが複数ある漢字は全てひらがなに変換する\n・一般的でない・難しい漢字は全てひらがなに変換する\n・小学校低学年レベル以上の漢字は積極的にひらがなに変換する\n・人名・地名もひらがなに変換する\n・英語・記号・セクションタグ（[Verse]など）はそのまま\n・音数（モーラ数）は変えない\n・変換後の歌詞全体のみを出力（説明不要）";
-    try{await callAI(sys,[{role:"user",content:lyric}],function(r){setHira(r);},2000);}catch(e){setHira("エラー: "+(e instanceof Error?e.message:String(e)));}
+    try{await callAI(sys,[{role:"user",content:getActiveLyric()}],function(r){setHira(r);},2000);}catch(e){setHira("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
   }
   async function doPrompt(){
+    if(!canGenerate()){alert("Q01またはSTEP1の自前歌詞を入力してください。");return;}
     if(promptLocked){if(!window.confirm("プロンプトを再生成すると現在のプロンプト・診断履歴が全て消えます。本当に再生成しますか？"))return;}
     setLoading("prompt");setPromptOut("");setPromptDiag("");setPromptDiagCount(0);
     const g=getGenre();const kws=buildPromptKw();
-    const userMsg="以下の情報から"+g.name+"の最高の音楽生成AIプロンプトを英語で生成してください。\n\n【素材の要約】\n"+buildMaterial()+"【制作設定】\n"+buildSettings()+"\n【使用するキーワード（必ず含める）】\n"+kws+"\n\nまた、この素材に合う他のジャンルも2〜3個提案があれば、プロンプトの後に「---ジャンル提案---」として1行ずつ記載してください。";
+    const lyricForPrompt=getActiveLyric();
+    const userMsg="以下の情報から"+g.name+"の最高の音楽生成AIプロンプトを英語で生成してください。\n\n【素材の要約】\n"+buildMaterial()+(lyricForPrompt?"【歌詞】\n"+lyricForPrompt+"\n":"")+"【制作設定】\n"+buildSettings()+"\n【使用するキーワード（必ず含める）】\n"+kws+"\n\nまた、この素材に合う他のジャンルも2〜3個提案があれば、プロンプトの後に「---ジャンル提案---」として1行ずつ記載してください。";
     try{
       await callAI(buildPromptSys(),[{role:"user",content:userMsg}],function(r){
         // 自動トリミング：文字数上限を超えていたらカンマ区切りで後ろから削除
@@ -735,10 +763,10 @@ export default function App(){
   const psClass=pst.startsWith("ok:")?"ok":"err";
   function Seg(props:{opts:string[];val:number;onChange:(i:number)=>void}){return (<div className="t-seg">{props.opts.map(function(o,i){return <div key={i} className={"t-seg-o"+(props.val===i?" on":"")} onClick={function(){props.onChange(i);}}>{o}</div>;})}</div>);}
   function NullSeg(props:{opts:string[];val:number|null;onChange:(i:number|null)=>void}){return (<div className="t-seg">{props.opts.map(function(o,i){return <div key={i} className={"t-seg-o"+(props.val===i?" on":"")} onClick={function(){props.onChange(props.val===i?null:i);}}>{o}</div>;})}</div>);}
-  function Badge(props:{type:"req"|"rec"|"opt"}){const map:{[k:string]:string}={req:"必須",rec:"★ 推奨",opt:"任意"};return <span className={"t-badge "+props.type}>{map[props.type]}</span>;}
+  function Badge(props:{type:"req"|"rec"|"opt"|"req-special"}){const map:{[k:string]:string}={"req-special":"🔑 必須",req:"必須",rec:"★ 推奨",opt:"任意"};return <span className={"t-badge "+props.type}>{map[props.type]}</span>;}
   const LAYERS:Layer[]=[
     {n:"LAYER 01",t:"事実を出す",h:"何があったか",qs:[
-      {l:"Q01",t:"この曲にしたい出来事を、一言で言うと？",n:"例：ずっと好きだった人に、結局気持ちを伝えられなかった話",k:"q01",r:2,badge:"req",bn:"テーマの軸。なければ歌詞の方向が定まらない。"},
+      {l:"Q01",t:"この曲にしたい出来事を、一言で言うと？",n:"例：ずっと好きだった人に、結局気持ちを伝えられなかった話",k:"q01",r:2,badge:"req-special" as "req",bn:"テーマの軸。なければ歌詞の方向が定まらない。"},
       {l:"Q02",t:"登場人物は誰？自分との関係性は？",n:"例：幼なじみ、ずっと片思いしていた同級生",k:"q02",r:3,badge:"rec",bn:"関係性が明確だと感情の対比が生まれ、歌詞の深みが増す。"},
       {l:"Q03",t:"何があったか、時系列で箇条書きにすると？",n:"順番通りじゃなくてもいい",k:"q03",r:6,badge:"rec",bn:"ストーリーの骨格。Aメロ（Verse 1・2）の流れに直接反映される。"},
     ]},
@@ -749,7 +777,7 @@ export default function App(){
       {l:"Q07",t:"「あのとき言えなかった」言葉はある？",n:"",k:"q07",r:2,badge:"opt",bn:"あればCメロ（Bridge）やアウトロ（Outro）の核心になる。"},
     ]},
     {n:"LAYER 03",t:"感情を出す",h:"矛盾してていい",qs:[
-      {l:"Q08",t:"表向きに感じてたことは？",n:"例：当たり前になってた / 逃げたかった",k:"q08",r:2,badge:"opt",bn:"感情の表層。Aメロ（Verse 1〜2）の入口になる。"},
+      {l:"Q08",t:"表向きに感じてたことは？",n:"例：当たり前になってた / 逃げたかった",k:"q08",r:2,badge:"rec",bn:"感情の表層。Aメロ（Verse 1〜2）の入口になる。"},
       {l:"Q09",t:"本当は何を感じてた？",n:"例：怖かっただけ / 甘えてたのは自分の方だった",k:"q09",r:3,badge:"rec",bn:"本音の感情がサビ（Chorus）とCメロ（Bridge）の核心になる。矛盾してて正解。"},
       {l:"Q10",t:"今でも続いてる感情は？",n:"後悔・未練・感謝・怒り・安堵…",k:"q10",r:2,badge:"opt",bn:"アウトロ（Outro）の余韻に使える。"},
       {l:"Q11",t:"相手への気持ちを正直に一言で言うと？",n:"うまい言葉じゃなくていい",k:"q11",r:2,badge:"opt",bn:"あれば大サビ（Last Chorus）の締めに反映できる。"},
@@ -763,6 +791,29 @@ export default function App(){
         <div className="t-bg"></div>
         <div className="t-w">
 
+          {missingModal&&(
+            <div className="t-ov">
+              <div className="t-mo">
+                <div className="t-mo-top">
+                  <div className="t-mo-br">MY LYRIC</div>
+                  <div className="t-mo-t">⚠️ 未入力の<em>必須項目</em>があります</div>
+                  <div className="t-mo-s">入力することで歌詞の品質が大きく上がります。</div>
+                </div>
+                <div className="t-mo-b">
+                  {missingModal.items.map(function(item,i){return(
+                    <div key={i} className="t-mo-step">
+                      <div className="t-mo-n" style={{color:"var(--rd)"}}>!</div>
+                      <div className="t-mo-tx">{item}</div>
+                    </div>
+                  );})}
+                </div>
+                <div className="t-mo-f" style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                  <button className="t-btn t-btn-g" style={{width:"100%",padding:"13px"}} onClick={function(){setMissingModal(null);setTab("create");}}>CREATEに戻って入力する</button>
+                  <button className="t-btn t-btn-gh" style={{width:"100%",padding:"13px"}} onClick={missingModal.onProceed}>このまま生成する</button>
+                </div>
+              </div>
+            </div>
+          )}
           {welcome&&(
             <div className="t-ov"><div className="t-mo">
               <div className="t-mo-top">
@@ -813,7 +864,7 @@ export default function App(){
                   <div className="t-sb">{sec.qs.map(function(q,i){return (
                     <div key={q.k}>{i>0&&<div className="t-div"></div>}
                       <div className="t-q">
-                        <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">{q.l}</div><Badge type={q.badge}/></div>
+                        <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">{q.l}</div><Badge type={q.badge as "req"|"rec"|"opt"|"req-special"}/></div>
                         <div className="t-badge-note">{q.bn}</div>
                         <div className="t-qt">{q.t}{q.n&&<span className={"t-qn"+(q.badge==="req"?" star":"")}>{q.n}</span>}</div>
                         <textarea rows={q.r} placeholder="ここに書く" value={(F as Record<string,string>)[q.k]} onChange={sf(q.k)}/>
@@ -981,8 +1032,9 @@ export default function App(){
                 <div className="t-sh"><span className="t-sn">STEP 0</span><span className="t-st">テーマをAIと確認する</span><span className="t-sh2">精度を上げる最重要ステップ</span></div>
                 <div className="t-sb">
                   <div className="t-info">AIが素材を整理して「核心」と「感情の流れ」を確認してくれる。ズレがあれば下の修正指示欄に入力して再確認する。</div>
+                  {!canGenerate()&&<div style={{fontSize:"11px",color:"var(--rd)",padding:"8px 12px",background:"rgba(224,85,85,0.08)",borderRadius:"8px",border:"1px solid rgba(224,85,85,0.2)"}}>Q01を入力するか、STEP1の自前歌詞欄に歌詞を入力してください。</div>}
                   {!confirmedLocked?(
-                    <button className="t-btn t-btn-g" onClick={function(){doConfirm();}} disabled={!!loading}>{loading==="confirm"?"確認中...":"テーマを確認する"}</button>
+                    <button className="t-btn t-btn-g" onClick={function(){doConfirm();}} disabled={!!loading||!canGenerate()}>{loading==="confirm"?"確認中...":"テーマを確認する"}</button>
                   ):(
                     <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
                       <div className="t-info" style={{fontSize:"10px"}}>✅ 確認済み。ズレがある場合は修正指示を入力して再確認してください。</div>
@@ -997,8 +1049,15 @@ export default function App(){
               <div className="t-s">
                 <div className="t-sh"><span className="t-sn">STEP 1</span><span className="t-st">歌詞を生成する</span><span className="t-sh2">全設定が反映される</span></div>
                 <div className="t-sb">
+                  {!canGenerate()&&<div style={{fontSize:"11px",color:"var(--rd)",padding:"8px 12px",background:"rgba(224,85,85,0.08)",borderRadius:"8px",border:"1px solid rgba(224,85,85,0.2)",marginBottom:"8px"}}>Q01を入力するか、下の自前歌詞欄に歌詞を入力してください。</div>}
+                  <div style={{marginBottom:"12px",padding:"14px 16px",background:"var(--sf2)",border:"1px solid var(--bd)",borderRadius:"12px"}}>
+                    <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>自前歌詞を使う（任意）</div>
+                    <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"8px"}}>自分で書いた歌詞がある場合はここに入力。Q01が空でも使用可能。STEP2以降が使えます。</div>
+                    <textarea rows={5} placeholder={"[Verse 1]\nここに歌詞を貼り付け..."} value={ownLyric} onChange={function(e){setOwnLyric(e.target.value);}} style={{marginBottom:"4px"}}/>
+                    {ownLyric.trim()&&<div style={{fontSize:"10px",color:"var(--gr)"}}>✅ 自前歌詞が入力されています。STEP2以降が使えます。</div>}
+                  </div>
                   <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
-                    <button className="t-btn t-btn-g" style={{flex:1}} onClick={doLyric} disabled={!!loading}>{loading==="lyric"?"生成中...":lyricLocked?"再生成する（履歴消去）":"GENERATE LYRIC"}</button>
+                    <button className="t-btn t-btn-g" style={{flex:1}} onClick={doLyric} disabled={!!loading||!canGenerate()}>{loading==="lyric"?"生成中...":lyricLocked?"再生成する（履歴消去）":"GENERATE LYRIC"}</button>
                   </div>
                   {(lyric||loading==="lyric")&&(
                     <div>
@@ -1132,8 +1191,9 @@ export default function App(){
                       <div className="t-info" style={{fontSize:"10px"}}>Udoは文字数制限なし。詳細で多層的なプロンプトが高品質な出力につながります。</div>
                     )}
                   </div>
+                  {!canGenerate()&&<div style={{fontSize:"11px",color:"var(--rd)",padding:"8px 12px",background:"rgba(224,85,85,0.08)",borderRadius:"8px",border:"1px solid rgba(224,85,85,0.2)",marginBottom:"8px"}}>Q01を入力するか、STEP1の自前歌詞欄に歌詞を入力してください。</div>}
                   <div className="t-br" style={{marginBottom:"8px"}}>
-                    <button className="t-btn t-btn-g" onClick={doPrompt} disabled={!!loading}>{loading==="prompt"?"生成中...":promptLocked?"再生成する（履歴消去）":"GENERATE PROMPT"}</button>
+                    <button className="t-btn t-btn-g" onClick={doPrompt} disabled={!!loading||!canGenerate()}>{loading==="prompt"?"生成中...":promptLocked?"再生成する（履歴消去）":"GENERATE PROMPT"}</button>
                     {promptOut&&!promptOut.startsWith("エラー")&&(
                       <span style={{fontSize:"10px",fontFamily:"'Space Grotesk',sans-serif",color:getPromptOnly().length>getStyleLimit()?"var(--rd)":"var(--gr)"}}>
                         {getPromptOnly().length}/{getStyleLimit()}文字
@@ -1351,7 +1411,10 @@ export default function App(){
                 <div className="t-sh"><span className="t-sn">GUIDE</span><span className="t-st">使い方ガイド</span></div>
                 <div className="t-sb" style={{gap:"0",padding:"8px 16px"}}>
                   {[
-                    {h:"必須とは",t:"最低限必要な情報。これがないとAIが方向性を決められない。必ず入力してから生成に進む。\n対象：Q01（テーマ）・Q12（核心の一文）・ENDING（終わり方）・ボーカル性別"},
+                    {h:"🔑 Q01（特別必須）について",t:"Q01が空欄の場合はGENERATEが動きません。テーマが決まらないと歌詞の方向が定まらないため、最初に必ず入力してください。"},
+                    {h:"必須とは（Q12・ENDING・ボーカル性別）",t:"空欄のまま生成しようとすると警告が表示されます。「CREATEに戻って入力する」か「このまま生成する」を選べます。入力することで歌詞の品質が大きく上がります。"},
+                    {h:"推奨とは",t:"できれば入力してほしい項目です。入力するほど歌詞のリアリティと深みが増します。"},
+                    {h:"任意とは",t:"こだわりたい人向けの項目です。空欄でもAIが最適な判断をします。"},
                     {h:"推奨とは",t:"あるとクオリティが大きく上がる項目。できるだけ入力することを強くすすめる。入れるほど歌詞の精度が上がる。\n対象：Q02・Q03・Q04・Q06・Q09・言語の割合"},
                     {h:"任意とは",t:"個性や方向性をさらに絞り込む項目。こだわりたい人が使う。選ばなければAIが補完する。\n対象：Q05・Q07・Q08・Q10・Q11・詳細設定の全項目"},
                     {h:"曲の構成用語について",t:"Verse（バース）＝ Aメロ：物語の導入部分\nPre-Chorus（プリコーラス）＝ Bメロ：サビへの橋渡し\nChorus（コーラス）＝ サビ：曲のメインフレーズ\nBridge（ブリッジ）＝ Cメロ：展開・転換部分\nLast Chorus（ラストコーラス）＝ 大サビ：最後のクライマックス\nOutro（アウトロ）＝ エンディング：曲の締め\nIntro Chorus ＝ 冒頭にサビを持ってくる演出\n\n※Aメロ・Bメロ・サビ・Cメロは日本での呼び方です。"},
