@@ -615,16 +615,16 @@ export default function App(){
     setLoading("");
   }
   async function doLyricDiag(){
-    if(!lyric)return;setLoading("lyricDiag");setLyricDiagnosis("");
+    if(!getActiveLyric())return;setLoading("lyricDiag");setLyricDiagnosis("");
     const newCount=lyricDiagCount+1;
     setLyricDiagCount(newCount);
-    try{await callAI(buildDiagSys(buildMaterial(),buildSettings()),[{role:"user",content:"以下の歌詞を診断してください。\n\n"+lyric}],function(r){setLyricDiagnosis(r);},2000);}
+    try{await callAI(buildDiagSys(buildMaterial(),buildSettings()),[{role:"user",content:"以下の歌詞を診断してください。\n\n"+getActiveLyric()}],function(r){setLyricDiagnosis(r);},2000);}
     catch(e){setLyricDiagnosis("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
   }
   function hasFatalLyricIssue(){return lyricDiagnosis.includes("🚨")&&!lyricDiagnosis.includes("🚨 致命的な問題\n・なし")&&!lyricDiagnosis.includes("🚨 致命的な問題（");}
   async function doLyricAutoFix(){
-    if(!lyric)return;setLoading("lyricFix");
+    if(!getActiveLyric())return;setLoading("lyricFix");
     const sys=buildChatSys()+"\n致命的な問題のみを修正する。軽微な問題は修正しない。修正後は歌詞全体のみを出力する。";
     const fixMsg="以下の診断結果の「🚨 致命的な問題」のみを修正してください。\n\n【診断結果】\n"+lyricDiagnosis+"\n\n【歌詞】\n"+lyric;
     try{
@@ -668,6 +668,13 @@ export default function App(){
   }
   async function doPrompt(){
     if(!canGenerate()){alert("Q01またはSTEP1の既存の歌詞を入力してください。");return;}
+    if(!ownLyric.trim()&&F.q01.trim().length>0&&F.q01.trim().length<10){
+      setShortQ01Modal({onProceed:function(){setShortQ01Modal(null);doPromptCore();}});
+      return;
+    }
+    doPromptCore();
+  }
+  async function doPromptCore(){
     if(promptLocked){if(!window.confirm("プロンプトを再生成すると現在のプロンプト・診断履歴が全て消えます。本当に再生成しますか？"))return;}
     setLoading("prompt");setPromptOut("");setPromptDiag("");setPromptDiagCount(0);
     const g=getGenre();const kws=buildPromptKw();
@@ -1085,12 +1092,13 @@ export default function App(){
                     {ownLyric.trim()&&<div style={{fontSize:"10px",color:"var(--gr)"}}>✅ 既存の歌詞が入力されています。STEP2以降が使えます。</div>}
                   </div>
                   <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
-                    <button className="t-btn t-btn-g" style={{flex:1}} onClick={doLyric} disabled={!!loading||!canGenerate()}>{loading==="lyric"?"生成中...":lyricLocked?"再生成する（履歴消去）":"GENERATE LYRIC"}</button>
+                    <button className="t-btn t-btn-g" style={{flex:1}} onClick={doLyric} disabled={!!loading||!canGenerate()||ownLyric.trim().length>0}>{loading==="lyric"?"生成中...":lyricLocked?"再生成する（履歴消去）":"GENERATE LYRIC"}</button>
+                    {ownLyric.trim()&&<div style={{fontSize:"10px",color:"var(--txd)",marginTop:"4px"}}>既存の歌詞が入力されています。歌詞を生成する場合は既存の歌詞欄を空にしてください。</div>}
                   </div>
                   {(lyric||loading==="lyric")&&(
                     <div>
                       <textarea readOnly value={lyric||(loading==="lyric"?"生成中...":"")} style={{minHeight:"280px",maxHeight:"400px",background:"rgba(200,80,192,0.04)",borderColor:"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",marginBottom:"8px"}}/>
-                      {lyric&&<button className={"t-btn "+(copyOk==="lyric"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(lyric,"lyric");}}>{copyLabel("lyric","通常の歌詞をコピーする（漢字あり）")}</button>}
+                      {getActiveLyric()&&<button className={"t-btn "+(copyOk==="lyric"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(getActiveLyric(),"lyric");}}>{copyLabel("lyric","通常の歌詞をコピーする（漢字あり）")}</button>}
                     </div>
                   )}
                 </div>
