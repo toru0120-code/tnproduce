@@ -226,6 +226,16 @@ const STYLE_LIMIT_OPTS = [200, 300, 500, 700, 1000];
 
 const TABS:{id:string;label:string}[]=[{id:"create",label:"CREATE"},{id:"generate",label:"GENERATE"},{id:"keywords",label:"KEYWORDS"},{id:"revise",label:"REVISE"},{id:"check",label:"CHECK"}];
 const ENDINGS=["後悔","祈り","解放","曖昧","前向き","感謝","怒り","余韻"];
+const ENDING_DESC:{[key:string]:string}={
+  "後悔":"あのとき違う選択をすればよかった…という余韻で終わる曲になります。",
+  "祈り":"相手の幸せや未来を静かに願って終わる曲になります。",
+  "解放":"苦しみや未練から抜け出し、前に進む決意で終わる曲になります。",
+  "曖昧":"答えを出さず、ただ余韻だけを残して終わる曲になります。",
+  "前向き":"乗り越えて新しい一歩を踏み出す希望で終わる曲になります。",
+  "感謝":"出会えてよかった、という温かい気持ちで終わる曲になります。",
+  "怒り":"悔しさや怒りをぶつけたまま終わる曲になります。",
+  "余韻":"言葉を最小限にして、聴く人の想像に委ねて終わる曲になります。",
+};
 const VOCAL_GENDER_OPTS=["男性","女性"];
 const VOCAL_TEXTURE_OPTS=["やわらかい","力強い","セクシー","透き通った","ダーク","中性的"];
 const VOCAL_RANGE_OPTS=["高め","中間","低め"];
@@ -448,7 +458,7 @@ export default function App(){
     return LANG_RATIO_OPTS[langRatio]+"の割合で英語を混ぜる";
   }
   function sf(k:string){return function(e:React.ChangeEvent<HTMLTextAreaElement|HTMLInputElement>){const v=e.target.value;setF(function(p){return Object.assign({},p,{[k]:v});});};}  
-  function togE(v:string){setEndings(function(p){return p.includes(v)?p.filter(function(x){return x!==v;}):p.concat([v]);});}
+  function togE(v:string){setEndings(function(p){return p.includes(v)?[]:([v]);});}
   function togAge(i:number){setTargetAges(function(p){return p.includes(i)?p.filter(function(x){return x!==i;}):p.concat([i]);});}
   function togKw(k:string){setSelKw(function(p){return p.includes(k)?p.filter(function(x){return x!==k;}):p.concat([k]);});}
   function nullTog(val:number|null,setter:(v:number|null)=>void):(i:number|null)=>void{return function(i:number|null){if(i===null){setter(null);}else{setter(val===i?null:i);}};}
@@ -827,8 +837,18 @@ export default function App(){
                 <div className="t-sh"><span className="t-sn">ENDING</span><span className="t-st">曲をどう終わらせたいか</span></div>
                 <div className="t-sb">
                   <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px"}}><Badge type="req"/></div>
-                  <div className="t-badge-note">着地点が決まると歌詞全体の構成が定まる。最低1つ選ぶ。</div>
+                  <div className="t-badge-note">曲の着地点を1つ選んでください。これが歌詞全体の方向性を決めます。</div>
                   <div className="t-chips">{ENDINGS.map(function(e){return <div key={e} className={"t-chip"+(endings.includes(e)?" on":"")} onClick={function(){togE(e);}}><div className="t-dot"></div>{e}</div>;})}</div>
+                  {endings.length>0&&(
+                    <div style={{display:"flex",flexDirection:"column",gap:"6px",marginTop:"4px"}}>
+                      {endings.map(function(e){return(
+                        <div key={e} style={{fontSize:"11px",color:"var(--txm)",padding:"8px 12px",background:"var(--gd)",borderRadius:"8px",border:"1px solid rgba(200,80,192,.15)",lineHeight:"1.7"}}>
+                          <span style={{background:"var(--grad)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontWeight:"700",marginRight:"6px"}}>{e}</span>
+                          {ENDING_DESC[e]}
+                        </div>
+                      );})}
+                    </div>
+                  )}
                   <textarea rows={2} placeholder={"もう少し詳しく（任意）\n例：追ってくる彼女を振り切った感じで終わりたい"} value={F.endingDetail} onChange={sf("endingDetail")}/>
                 </div>
               </div>
