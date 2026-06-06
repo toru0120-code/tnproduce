@@ -242,7 +242,6 @@ const AGE_OPTS=["10代","20代","30代","40代","50代","60代〜"];
 const TARGET_GENDER_OPTS=["男性向け","女性向け","男女問わず"];
 const METAPHOR_OPTS=["AIにおまかせ","完全に隠す（比喩のみ）","少し匂わせる","本人だけわかる","直接的に表現"];
 const DUAL_OPTS=["OFF（通常）","ON（一般向けと本人向けの二重構造）"];
-const CLIP_SECS=[15,30,60];
 const VOCAL_TEXTURE_KW=["soft warm vocal","powerful passionate vocal","sultry seductive vocal","clear crystalline vocal","dark brooding vocal","androgynous neutral vocal"];
 const VOCAL_RANGE_KW=["high register upper range","mid range vocal","low register deep vocal"];
 const VOCAL_ORIGIN_KW: (string | null)[] =["japanese vocal style j-pop vocal","native english vocalist western vocal style",null];
@@ -268,10 +267,21 @@ const DEFAULT_PARTS:Part[]=[
   {id:"last",name:"Last Chorus（大サビ）",tag:"[Last Chorus]",enabled:true},
   {id:"outro",name:"Outro（アウトロ）",tag:"[Outro]",enabled:true},
 ];
-const EXTRA_KW={
-  "EMOTION":["melancholic","bittersweet","emotionally raw","quiet regret","slow burn intensity","simmering emotion","passionate restraint","delicate","tender","emotionally vulnerable"],
-  "INSTRUMENT":["Rhodes piano","mellow electric guitar","upright bass","slap bass","finger picked guitar","brushed snare","swing hi-hat","punchy drums","muted trumpet","soft saxophone","lush synth pads","lo-fi texture"],
-  "ATMOSPHERE":["late night drive","neon reflections","summer night highway","winter night","phone screen glow","late night apartment","cabaret night","still water atmosphere","quiet night"],
+const EXTRA_KW:{[cat:string]:{en:string;ja:string}[]}={
+  "EMOTION":[
+    {en:"melancholic",ja:"哀愁・物悲しい"},{en:"bittersweet",ja:"切ない幸福感"},{en:"emotionally raw",ja:"感情むき出し"},{en:"quiet regret",ja:"静かな後悔"},
+    {en:"slow burn intensity",ja:"じわじわ高まる感情"},{en:"simmering emotion",ja:"くすぶる感情"},{en:"passionate restraint",ja:"抑えた情熱"},{en:"delicate",ja:"繊細・壊れそう"},
+    {en:"tender",ja:"やさしい・いたわり"},{en:"emotionally vulnerable",ja:"感情的に傷つきやすい"},
+  ],
+  "INSTRUMENT":[
+    {en:"Rhodes piano",ja:"ローズピアノ"},{en:"mellow electric guitar",ja:"メロウなエレキギター"},{en:"upright bass",ja:"ウッドベース"},{en:"slap bass",ja:"スラップベース"},
+    {en:"finger picked guitar",ja:"指弾きギター"},{en:"brushed snare",ja:"ブラシスネア"},{en:"swing hi-hat",ja:"スウィングハイハット"},{en:"punchy drums",ja:"パンチのあるドラム"},
+    {en:"muted trumpet",ja:"ミュートトランペット"},{en:"soft saxophone",ja:"柔らかいサックス"},{en:"lush synth pads",ja:"豊かなシンセパッド"},{en:"lo-fi texture",ja:"ローファイな質感"},
+  ],
+  "ATMOSPHERE":[
+    {en:"late night drive",ja:"深夜のドライブ"},{en:"neon reflections",ja:"ネオンの反射"},{en:"summer night highway",ja:"夏の夜の幹線道路"},{en:"winter night",ja:"冬の夜"},
+    {en:"phone screen glow",ja:"スマホ画面の光"},{en:"late night apartment",ja:"深夜のアパート"},{en:"cabaret night",ja:"キャバレーの夜"},{en:"still water atmosphere",ja:"静水のような静けさ"},{en:"quiet night",ja:"静かな夜"},
+  ],
 };
 const CHECKS_BEFORE=["テーマの核心を一言で言えるか","登場人物の関係性は明確か","感情の流れに起承転結があるか","最後の終わり方は決まってるか","ターゲットリスナーは誰か","比喩の軸は何か","言語の割合は決まってるか"];
 const CHECKS_AFTER=["同じパートの行数は揃ってるか","ひらがなの音数は揃ってるか","伏線と回収は成立してるか","比喩が多すぎないか","説明しすぎてないか","選択したジャンルらしいか","音楽生成AIが読み間違いしそうな漢字はないか","プロンプトがSTEP5で選択した文字数上限以内に収まってるか（Suno使用時）"];
@@ -301,7 +311,7 @@ async function callAI(system:string,messages:{role:string;content:string}[],onCh
     try{
       while(true){const r=await reader.read();if(r.done)break;buf+=dec.decode(r.value,{stream:true});const lines=buf.split("\n");buf=lines.pop()??"";
         for(let i=0;i<lines.length;i++){if(!lines[i].startsWith("data:"))continue;const d=lines[i].slice(5).trim();if(d==="[DONE]")return full;
-          try{const j=JSON.parse(d);if(j.type==="content_block_delta"&&j.delta&&j.delta.text){full+=j.delta.text;onChunk(full);}}catch(e){}}}
+          try{const j=JSON.parse(d);const text=j.delta?.text??j.choices?.[0]?.delta?.content??j.content??"";if(text){full+=text;onChunk(full);}}catch(e){}}}
       return full;
     }catch(e:unknown){if(full.length>0)return full;throw e;}
   }
@@ -362,11 +372,14 @@ export default function App(){
   const[chatInput,setChatInput]=useState("");
   const[lyricDiagnosis,setLyricDiagnosis]=useState("");
   const[promptDiag,setPromptDiag]=useState("");
-  const[clipSec,setClipSec]=useState<number|null>(null);
-  const[clipSection,setClipSection]=useState(0);
-  const[clipPrompt,setClipPrompt]=useState("");
   const[copyOk,setCopyOk]=useState("");
   const[insertOk,setInsertOk]=useState<string|null>(null);
+  const[lastValidPrompt,setLastValidPrompt]=useState("");
+  const[keywordsChanged,setKeywordsChanged]=useState(false);
+  const[fromKeywords,setFromKeywords]=useState(false);
+  const[chatEditInput,setChatEditInput]=useState("");
+  const[chatEditDisplay,setChatEditDisplay]=useState<{role:string;content:string}[]>([]);
+  const[lyricChanged,setLyricChanged]=useState(false);
   const[ownLyric,setOwnLyric]=useState("");
   const[missingModal,setMissingModal]=useState<{items:string[];onProceed:()=>void}|null>(null);
   const[shortQ01Modal,setShortQ01Modal]=useState<{onProceed:()=>void}|null>(null);
@@ -458,7 +471,7 @@ export default function App(){
   function sf(k:string){return function(e:React.ChangeEvent<HTMLTextAreaElement|HTMLInputElement>){const v=e.target.value;setF(function(p){return Object.assign({},p,{[k]:v});});};}  
   function togE(v:string){setEndings(function(p){return p.includes(v)?[]:([v]);});}
   function togAge(i:number){setTargetAges(function(p){return p.includes(i)?p.filter(function(x){return x!==i;}):p.concat([i]);});}
-  function togKw(k:string){setSelKw(function(p){return p.includes(k)?p.filter(function(x){return x!==k;}):p.concat([k]);});}
+  function togKw(k:string){setSelKw(function(p){return p.includes(k)?p.filter(function(x){return x!==k;}):p.concat([k]);});setKeywordsChanged(true);}
   function nullTog(val:number|null,setter:(v:number|null)=>void):(i:number|null)=>void{return function(i:number|null){if(i===null){setter(null);}else{setter(val===i?null:i);}};}
   function togglePart(id:string){setParts(function(p){return p.map(function(x){return x.id===id?Object.assign({},x,{enabled:!x.enabled}):x;});});}
   function movePart(idx:number,dir:number){setParts(function(prev){const next=prev.slice();const t=idx+dir;if(t<0||t>=next.length)return prev;const tmp=next[idx];next[idx]=next[t];next[t]=tmp;return next;});}
@@ -476,7 +489,7 @@ export default function App(){
     setChordProg(null);setBpm(null);setTargetAges([]);setTargetGender(null);setMetaphor(0);setDual(0);
     setStructMode("basic");setParts(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
     setConfirmedLocked(false);setTitleLocked(false);setLyricLocked(false);setPromptLocked(false);setWorldLocked(false);
-    setOwnLyric("");
+    setOwnLyric("");setLastValidPrompt("");setKeywordsChanged(false);setFromKeywords(false);setChatEditInput("");setChatEditDisplay([]);setLyricChanged(false);
     setLyricDiagCount(0);setPromptDiagCount(0);setConfirmRevise("");setWorldRevise("");
     setMusicAI("suno");setStyleLimit(300);
   }
@@ -545,13 +558,13 @@ export default function App(){
   }
   function buildDiagSys(mat:string,settings:string){
     const g=getGenre();const firstTag=getFirstTag();
-    return"あなたはプロの作詞家・音楽プロデューサーとして歌詞の最終診断を行います。診断のみ行う。修正は絶対に行わない。\n\n【元の素材】\n"+mat+"\n【制作設定】\n"+settings+"\n\n審査項目：\n・行数・音数の整合性（同じパートは揃ってるか）\n・テーマ・核心との一致（素材と照合）\n・感情の流れ（始まり→変化→結末が自然か）\n・"+g.name+"らしさ（基準："+g.checkKw+"）\n・言語割合（"+getLangInstr()+"）\n・構成（"+firstTag+"から始まってるか）\n\n出力形式（必ず守る）：\n\n🚨 致命的な問題（テーマ不一致・構成崩壊・ジャンルらしさの欠如など、曲として成立しない問題）:\n・〇〇（なければ「なし」と記載）\n\n⚠️ 軽微な問題（表現の好み・細かいニュアンスなど任意で修正）:\n・〇〇（なければ「なし」と記載）\n\n✅ 問題なし項目:\n・〇〇\n\n致命的な問題がない場合は最後に「完成度は十分です。」と明記する。";
+    return"あなたはプロの作詞家・音楽プロデューサーとして歌詞の最終診断を行います。診断のみ行う。修正は絶対に行わない。\n\n【元の素材】\n"+mat+"\n【制作設定】\n"+settings+"\n\n審査項目：\n・行数・音数の整合性（同じパートは揃ってるか）\n・テーマ・核心との一致（素材と照合）\n・感情の流れ（始まり→変化→結末が自然か）\n・"+g.name+"らしさ（基準："+g.checkKw+"）\n・言語割合（"+getLangInstr()+"）\n・構成（"+firstTag+"から始まってるか）\n\n出力形式（必ず守る）：\n\n🚨 致命的な問題（テーマ不一致・構成崩壊・ジャンルらしさの欠如など、曲として成立しない問題）:\n・〇〇（なければ「なし」と記載）\n\n⚠️ 軽微な問題（表現の好み・細かいニュアンスなど任意で修正）:\n・〇〇（なければ「なし」と記載）\n\n✅ 問題なし項目:\n・〇〇\n\n致命的な問題がない場合は最後に「完成度は十分です。」と明記する。\n\n重要注意：ユーザーが意図的にジャンル・ジャンルミックス・キーワード・カスタム設定を行っている場合、それが原因の違和感は致命的ではなく「⚠ 注意（ユーザー設定による意図的な可能性があります）」として表示すること。";
   }
   function buildPromptDiagSys(settings:string){
     const g=getGenre();
     const styleLimit=getStyleLimit();
     const limitNote=musicAI==="suno"?`スタイルプロンプト上限：${styleLimit}文字`:"文字数制限：なし（Udio）";
-    return"あなたは音楽生成AIプロンプトの専門エンジニアとして最終診断を行います。診断のみ行う。修正は絶対に行わない。\n\n【制作設定】\n"+settings+"\n【"+musicAI.toUpperCase()+" / "+limitNote+"】\n\n審査項目：\n・文字数は上限内か（文字数を明記）\n・ジャンル（"+g.name+"）のキーワードが適切に含まれているか\n・ボーカル設定が含まれているか\n・感情・雰囲気・楽器・空気感のバランス\n・重複・矛盾するキーワードがないか\n・設定した内容との整合性\n\n出力形式（必ず守る）：\n\n🚨 致命的な問題（文字数超過・ジャンルキーワード欠如・矛盾する設定など）:\n・〇〇（なければ「なし」と記載）\n\n⚠️ 軽微な問題（キーワードの順序・細かい調整など任意）:\n・〇〇（なければ「なし」と記載）\n\n✅ 問題なし項目:\n・〇〇\n\n致命的な問題がない場合は最後に「完成度は十分です。」と明記する。";
+    return"あなたは音楽生成AIプロンプトの専門エンジニアとして最終診断を行います。診断のみ行う。修正は絶対に行わない。\n\n【制作設定】\n"+settings+"\n【"+musicAI.toUpperCase()+" / "+limitNote+"】\n\n審査項目：\n・文字数は上限内か（文字数を明記）\n・ジャンル（"+g.name+"）のキーワードが適切に含まれているか\n・ボーカル設定が含まれているか\n・感情・雰囲気・楽器・空気感のバランス\n・重複・矛盾するキーワードがないか\n・設定した内容との整合性\n\n出力形式（必ず守る）：\n\n🚨 致命的な問題（文字数超過・ジャンルキーワード欠如・矛盾する設定など）:\n・〇〇（なければ「なし」と記載）\n\n⚠️ 軽微な問題（キーワードの順序・細かい調整など任意）:\n・〇〇（なければ「なし」と記載）\n\n✅ 問題なし項目:\n・〇〇\n\n致命的な問題がない場合は最後に「完成度は十分です。」と明記する。\n\n重要注意：ユーザーが意図的にジャンル・ジャンルミックス・キーワード・カスタム設定を行っている場合、それが原因の違和感は致命的ではなく「⚠ 注意（ユーザー設定による意図的な可能性があります）」として表示すること。";
   }
   function getStyleLimit(){
     if(musicAI==="udio") return 99999;
@@ -575,7 +588,10 @@ export default function App(){
     if(!canGenerate()){alert("Q01またはSTEP1の既存の歌詞を入力してください。");return;}
     const mat=buildMaterial();if(!mat.trim()){alert("CREATEタブで素材を入力してください");return;}
     setLoading("confirm");setConfirmed("");
-    const sys="あなたはプロの作詞家です。ユーザーが送った曲の素材を読んで、以下を日本語で返してください。\n1.「この曲の核心」を一文で言語化する\n2.「感情の流れ」を3段階で整理する（始まり→変化→結末）\n3. 確認したい点があれば1〜2個質問する\n形式：\n【核心】〇〇\n【感情の流れ】〇〇→〇〇→〇〇\n【確認】〇〇";
+    const isRevise=!!revise;
+    const sys=isRevise
+      ?"あなたはプロの作詞家です。ユーザーの回答と元の素材を統合して確定テーマを作成してください。新しい質問は絶対に追加しないでください。\n形式：\n【核心】〇〇\n【感情の流れ】始まり→変化→結末\n【確定テーマ】〇〇（2〜3行で）\n【確認】なし"
+      :"あなたはプロの作詞家です。素材を読んでテーマを整理し、不足があれば最大3つだけ確認質問を出してください。同じ質問を繰り返さないでください。\n形式：\n【核心】〇〇\n【感情の流れ】〇〇→〇〇→〇〇\n【確認】質問があれば最大3つ。なければ「なし」";
     const content=revise?"以下の素材を整理してください。なお、前回の確認に対して次の修正指示があります："+revise+"\n\n"+mat:"以下の素材を整理してください。\n\n"+mat;
     try{await callAI(sys,[{role:"user",content:content}],function(r){setConfirmed(r);});setConfirmedLocked(true);}catch(e){setConfirmed("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
@@ -639,6 +655,32 @@ export default function App(){
     }catch(e){setLyric("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
   }
+  async function sendLyricEditChat(){
+    if(!chatEditInput.trim()||loading)return;
+    if(!getActiveLyric()){alert("先に歌詞を生成するか、既存の歌詞を入力してください");return;}
+    const userMsg=chatEditInput.trim();setChatEditInput("");
+    const nd=chatEditDisplay.concat([{role:"user",content:userMsg}]);
+    setChatEditDisplay(nd.concat([{role:"assistant",content:"修正中..."}]));
+    setLoading("lyricEdit");
+    const sys=buildChatSys()+"\n\n必ず以下の形式で出力する:\n修正前:\n（変更した行のみ）\n\n修正後:\n（変更後の行のみ）\n\n変更理由:\n（簡潔に）\n\n修正済み歌詞全文:\n（[Verse 1]から始まる歌詞全体）";
+    const msgs=[{role:"user" as const,content:"現在の歌詞:\n"+getActiveLyric()+"\n\n診断結果:\n"+lyricDiagnosis+"\n\nユーザー指示:\n"+userMsg+"\n\n指定されていない部分は変更しないでください。歌詞全体のテーマ・構成は維持してください。"}];
+    try{
+      let r="";
+      await callAI(sys,msgs,function(res){r=res;setChatEditDisplay(nd.concat([{role:"assistant",content:res}]));},2000);
+      setChatEditDisplay(nd.concat([{role:"assistant",content:r}]));
+      setLyricChanged(true);
+    }catch(e){setChatEditDisplay(nd.concat([{role:"assistant",content:"エラー: "+(e instanceof Error?e.message:String(e))}]));}
+    setLoading("");
+  }
+  function applyLyricEdit(text:string){
+    const marker="修正済み歌詞全文:";
+    const idx=text.indexOf(marker);
+    if(idx>=0){
+      const newLyric=extractLyrics(text.slice(idx+marker.length).trim());
+      if(newLyric&&newLyric.length>20){setLyric(newLyric);setLyricChanged(true);setLyricDiagnosis("");setLyricDiagCount(0);}
+    }
+  }
+  function handleLyricEditKey(e:React.KeyboardEvent<HTMLTextAreaElement>){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendLyricEditChat();}}
   async function sendChat(){
     if(!chatInput.trim()||loading)return;if(!getActiveLyric()){alert("先に歌詞を生成するか、既存の歌詞を入力してください");return;}
     const userMsg=chatInput.trim();setChatInput("");
@@ -712,7 +754,7 @@ export default function App(){
           setPromptOut(r);
         }
       });
-      setPromptLocked(true);
+      setPromptLocked(true);setLastValidPrompt(promptOut);setKeywordsChanged(false);
     }catch(e){setPromptOut("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
   }
@@ -727,22 +769,18 @@ export default function App(){
   }
   function hasFatalPromptIssue(){return hasFatalIssue(promptDiag);}
   async function doPromptFix(instruction:string){
-    const prompt=getPromptOnly();if(!prompt)return;
-    setLoading("promptFix");setPromptOut("");
+    const prompt=getPromptOnly()||lastValidPrompt;if(!prompt)return;
+    const prevPrompt=promptOut;
+    setLoading("promptFix");
     const sys=buildPromptSys()+"\n修正後はプロンプトのみを出力する。説明禁止。";
-    try{await callAI(sys,[{role:"user",content:"以下の音楽生成AIプロンプトを修正してください。\n\n"+prompt+"\n\n指示："+instruction}],function(r){setPromptOut(r);});}
-    catch(e){setPromptOut("エラー: "+(e instanceof Error?e.message:String(e)));}
-    setLoading("");
-  }
-  async function doClipPrompt(){
-    if(!promptOut||promptOut.startsWith("エラー")){alert("先にプロンプトを生成してください");return;}
-    setLoading("clip");setClipPrompt("");
-    const secLabel=clipSec?clipSec+"秒クリップ":"クリップ（秒数AIにおまかせ）";
-    const ep=getEnabledParts();
-    const sectionLabel=clipSection===0?"AIにおまかせ（最もフックになる部分）":(ep[clipSection-1]||"AIにおまかせ");
-    const sys=buildPromptSys()+"\nクリップ用の音楽生成AIプロンプトを生成する。1000文字以内。プロンプトのみ出力。";
-    const userMsg="以下の音楽生成AIプロンプトをベースに、クリップ用プロンプトを生成してください。\n\n【ベースプロンプト】\n"+getPromptOnly()+"\n\n【クリップ設定】\n秒数："+secLabel+"\n使用する部分："+sectionLabel+"\n\nクリップ用のキーワード（short clip, highlight, hook section）を追加してください。";
-    try{await callAI(sys,[{role:"user",content:userMsg}],function(r){setClipPrompt(r);});}catch(e){setClipPrompt("エラー: "+(e instanceof Error?e.message:String(e)));}
+    try{
+      let result="";
+      await callAI(sys,[{role:"user",content:"以下の音楽生成AIプロンプトを修正してください.\n\n"+prompt+"\n\n指示："+instruction}],function(r){result=r;setPromptOut(r);});
+      if(result)setLastValidPrompt(result);
+    }catch(e){
+      setPromptOut(prevPrompt);
+      setLastValidPrompt(prevPrompt);
+    }
     setLoading("");
   }
   async function doWorldCard(revise?:string){
@@ -751,9 +789,10 @@ export default function App(){
     if(worldLocked&&!revise){if(!window.confirm("世界観カードを再生成します。続けますか？"))return;}
     setLoading("world");setWorldCard("");
     const titleLine=(titleMode==="custom"?customTitle:selectedTitle)||"（未設定）";
-    const sys="あなたはプロのアートディレクター兼作詞家です。曲の世界観を、画像・映像制作にそのまま使える形で言語化します。\n出力形式（この形式のみ・前置きや説明は禁止）：\n\nタイトル：（曲のタイトル）\n\nテーマ：\n（曲の核心を2行以内で）\n\n感情・雰囲気：\n（・区切りで5個程度）\n\n色調イメージ：\n（・区切りで具体的な色や光の情景を5個程度）\n\nシーンイメージ：\n（・区切りで映像に使える場面を5個程度）\n\nキーワード（英語）：\n（画像・映像生成にそのまま使える英語キーワードをカンマ区切りで10〜15個）";
+    const genreInfo=getGenreName();
+    const sys="あなたはプロのアートディレクター兼作詞家です。曲の世界観を、画像・映像制作にそのまま使える形で言語化します。\n出力形式（この形式のみ・前置きや説明は禁止）：\n\nタイトル：（曲のタイトル）\n\nジャンル：\n（設定されているジャンルを記載）\n\nテーマ：\n（曲の核心を2行以内で）\n\n感情・雰囲気：\n（・区切りで5個程度）\n\n色調イメージ：\n（・区切りで具体的な色や光の情景を5個程度）\n\nシーンイメージ：\n（・区切りで映像に使える場面を5個程度）\n\nキーワード（英語）：\n（画像・映像生成にそのまま使える英語キーワードをカンマ区切りで10〜15個）";
     const reviseNote=revise?"\n\n【修正指示】\n"+revise:"";
-    const userMsg="以下の素材・歌詞・設定から曲の世界観カードを作成してください。\n\n【タイトル】\n"+titleLine+"\n\n【素材】\n"+mat+"\n【制作設定】\n"+buildSettings()+"\n【歌詞】\n"+getActiveLyric()+reviseNote;
+    const userMsg="以下の素材・歌詞・設定から曲の世界観カードを作成してください。\n\n【タイトル】\n"+titleLine+"\n\n【ジャンル】\n"+genreInfo+"\n\n【素材】\n"+mat+"\n【制作設定】\n"+buildSettings()+"\n【歌詞】\n"+getActiveLyric()+reviseNote;
     try{await callAI(sys,[{role:"user",content:userMsg}],function(r){setWorldCard(r);},2000);setWorldLocked(true);}catch(e){setWorldCard("エラー: "+(e instanceof Error?e.message:String(e)));}
     setLoading("");
   }
@@ -1114,47 +1153,81 @@ export default function App(){
               </div>
 
               <div className="t-s">
-                <div className="t-sh"><span className="t-sn">STEP 2</span><span className="t-st">歌詞の最終チェック</span><span className="t-sh2">診断 {lyricDiagCount}/2回目{lyricDiagCount>0?" 完了":""}</span></div>
+                <div className="t-sh"><span className="t-sn">STEP 2</span><span className="t-st">歌詞の最終チェック・編集</span><span className="t-sh2">診断 {lyricDiagCount}/2回目{lyricDiagCount>0?" 完了":""}</span></div>
                 <div className="t-sb">
                   {!getActiveLyric()?(
                     <div style={{fontSize:"11px",color:"var(--txd)",fontStyle:"italic"}}>STEP 1で歌詞を生成するか、既存の歌詞を入力すると使えます。</div>
                   ):(
                     <div>
+                      {lyricChanged&&<div className="t-info" style={{marginBottom:"8px",borderColor:"rgba(200,80,192,.3)"}}>⚠️ 歌詞が変更されました。必要に応じて再度「歌詞最終チェック」を実行してください。</div>}
                       <div className="t-info" style={{marginBottom:"10px"}}>
-                        <strong>🚨 致命的な問題</strong>：テーマ不一致・構成崩壊など → AIが自動修正<br/>
-                        <strong>⚠️ 軽微な問題</strong>：表現の好みなど → REVISEタブで個別に調整<br/>
-                        診断は最大2回まで。致命的な問題がなければ完成です。
+                        <strong>🚨 致命的な問題</strong>：タグ崩壊・構成崩壊・文字化けなど → AIが自動修正（任意）<br/>
+                        <strong>⚠️ 改善推奨</strong>：表現・ジャンルらしさなど → 下の歌詞編集チャットで調整<br/>
+                        診断は最大2回まで。
                       </div>
                       {lyricDiagCount<2&&(
                         <button className="t-btn t-btn-g" onClick={doLyricDiag} disabled={!!loading} style={{width:"100%",padding:"12px",marginBottom:"10px"}}>
-                          {loading==="lyricDiag"?"診断中...":`診断する（${lyricDiagCount+1}/2回目）`}
+                          {loading==="lyricDiag"?"診断中...":`歌詞最終チェック（${lyricDiagCount+1}/2回目）`}
                         </button>
                       )}
                       {lyricDiagCount>=2&&!lyricDiagnosis&&(
-                        <div className="t-info" style={{marginBottom:"10px"}}>診断2回完了。細かい修正はREVISEタブへ。</div>
+                        <div className="t-info" style={{marginBottom:"10px"}}>診断2回完了。下の歌詞編集チャットで調整できます。</div>
                       )}
                       {lyricDiagnosis&&(
                         <div>
                           <div className="t-out diag" style={{maxHeight:"300px",marginBottom:"10px"}}>{lyricDiagnosis}</div>
                           {hasFatalLyricIssue()?(
-                            <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
-                              <button className="t-btn t-btn-g" style={{flex:1,padding:"11px"}} onClick={doLyricAutoFix} disabled={!!loading}>{loading==="lyricFix"?"修正中...":"AIが自動修正する（致命的問題のみ）"}</button>
+                            <div style={{display:"flex",flexDirection:"column",gap:"8px",marginBottom:"8px"}}>
+                              <div style={{fontSize:"11px",color:"var(--txd)"}}>AI自動修正（任意）または下の歌詞編集チャットで自分で修正することもできます。</div>
+                              <button className="t-btn t-btn-g" style={{width:"100%",padding:"11px"}} onClick={doLyricAutoFix} disabled={!!loading}>{loading==="lyricFix"?"修正中...":"AIが自動修正する（致命的問題のみ）"}</button>
                             </div>
                           ):(
                             <div>
                               <div className="t-info" style={{marginBottom:"8px",borderColor:"rgba(126,200,126,.2)"}}>✅ 致命的な問題はありません。完成度は十分です。</div>
-                              <div style={{fontSize:"11px",color:"var(--txd)",marginBottom:"8px"}}>細かい調整はREVISEタブへ →</div>
-                              <button className="t-btn t-btn-gh" style={{width:"100%"}} onClick={function(){setTab("revise");}}>REVISEタブで個別修正する</button>
                             </div>
                           )}
                           {lyricDiagCount>=2&&hasFatalLyricIssue()&&(
-                            <div>
-                              <div className="t-info" style={{marginTop:"8px",marginBottom:"8px"}}>診断2回完了。致命的な問題が残っています。自動修正後はREVISEタブで調整してください。</div>
-                              <button className="t-btn t-btn-gh" style={{width:"100%"}} onClick={function(){setTab("revise");}}>REVISEタブへ</button>
-                            </div>
+                            <div className="t-info" style={{marginTop:"8px",marginBottom:"8px"}}>診断2回完了。下の歌詞編集チャットで調整してください。</div>
                           )}
                         </div>
                       )}
+                      <div className="t-div" style={{margin:"16px 0"}}></div>
+                      <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:"9px",background:"var(--grad)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:".1em",textTransform:"uppercase",marginBottom:"8px",fontWeight:700}}>歌詞編集AIチャット</div>
+                      <div style={{fontSize:"11px",color:"var(--txd)",marginBottom:"8px"}}>診断結果・歌詞全文・あなたの指示をAIへ渡して修正します。指定した箇所のみ変更します。</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:"6px",marginBottom:"10px"}}>
+                        {[
+                          {label:"感情を強くする",text:"感情表現を強くしてください。"},
+                          {label:"感情を弱くする",text:"感情表現を弱くしてください。"},
+                          {label:"比喩を増やす",text:"比喩表現を増やしてください。"},
+                          {label:"比喩を減らす",text:"比喩表現を減らしてください。"},
+                          {label:"音数を整える",text:"各パートの音数を揃えてください。"},
+                          {label:"韻を増やす",text:"韻を増やしてください。"},
+                          {label:"サビを強くする",text:"サビをより印象的に強くしてください。"},
+                          {label:"説明を減らす",text:"説明的な表現を減らしてください。"},
+                          {label:"ジャンルらしさを強くする",text:"現在設定されているジャンルらしさを強めてください。"},
+                          {label:"全体を見直す",text:"歌詞全体を見直して整合性を確認してください。"},
+                        ].map(function(btn,bi){return(
+                          <button key={bi} className="t-btn t-btn-gh" style={{fontSize:"10px",padding:"6px 10px"}} onClick={function(){setChatEditInput(function(prev){return prev?prev+"\n"+btn.text:btn.text;});}}>{btn.label}</button>
+                        );})}
+                      </div>
+                      <div className="t-chat">
+                        <div className="t-chat-msgs">
+                          {chatEditDisplay.length===0&&<div style={{fontSize:"11px",color:"var(--txd)",fontStyle:"italic"}}>上のクイック修正ボタンまたは直接入力して送信してください。<br/>AIが修正前・修正後・変更理由を表示します。</div>}
+                          {chatEditDisplay.map(function(m,mi){return(
+                            <div key={mi} className={"t-msg "+(m.role==="user"?"u":"a")}>
+                              <div className="t-msg-who">{m.role==="user"?"YOU":"MY LYRIC AI"}</div>
+                              <div className="t-msg-body">{m.content}</div>
+                              {m.role==="assistant"&&m.content.includes("修正済み歌詞全文:")&&(
+                                <button className="t-btn t-btn-g" style={{marginTop:"8px",padding:"8px 14px",fontSize:"10px"}} onClick={function(){applyLyricEdit(m.content);}}>歌詞へ反映する</button>
+                              )}
+                            </div>
+                          );})}
+                        </div>
+                        <div className="t-chat-in">
+                          <textarea rows={2} placeholder="修正指示を入力（Enterで送信）" value={chatEditInput} onChange={function(e){setChatEditInput(e.target.value);}} onKeyDown={handleLyricEditKey}/>
+                          <button className="t-chat-send" onClick={sendLyricEditChat} disabled={loading==="lyricEdit"||!chatEditInput.trim()}>SEND</button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1236,6 +1309,7 @@ export default function App(){
                       <div className="t-info" style={{fontSize:"10px"}}>Udioは文字数制限なし。詳細で多層的なプロンプトが高品質な出力につながります。</div>
                     )}
                   </div>
+                  {fromKeywords&&keywordsChanged&&<div style={{fontSize:"11px",color:"var(--g)",padding:"8px 12px",background:"var(--gd)",borderRadius:"8px",border:"1px solid rgba(200,80,192,.2)",marginBottom:"8px"}}>⚠️ キーワードが変更されています。「GENERATE PROMPT」を押すと最新のキーワードが反映されます。</div>}
                   {!canGenerate()&&<div style={{fontSize:"11px",color:"var(--rd)",padding:"8px 12px",background:"rgba(224,85,85,0.08)",borderRadius:"8px",border:"1px solid rgba(224,85,85,0.2)",marginBottom:"8px"}}>Q01を入力するか、STEP1の既存の歌詞欄に歌詞を入力してください。</div>}
                   <div className="t-br" style={{marginBottom:"8px"}}>
                     <button className="t-btn t-btn-g" onClick={doPrompt} disabled={!!loading||!canGenerate()}>{loading==="prompt"?"生成中...":promptLocked?"再生成する（履歴消去）":"GENERATE PROMPT"}</button>
@@ -1256,7 +1330,7 @@ export default function App(){
               </div>
 
               <div className="t-s">
-                <div className="t-sh"><span className="t-sn">STEP 6</span><span className="t-st">プロンプト最終チェック・クリップ設定</span><span className="t-sh2">任意</span></div>
+                <div className="t-sh"><span className="t-sn">STEP 6</span><span className="t-st">プロンプト最終チェック</span><span className="t-sh2">任意</span></div>
                 <div className="t-sb">
                   {!promptOut||promptOut.startsWith("エラー")?(
                     <div style={{fontSize:"11px",color:"var(--txd)",fontStyle:"italic"}}>STEP 5でプロンプトを生成すると使えます。</div>
@@ -1282,12 +1356,12 @@ export default function App(){
                       <div className="t-out diag" style={{maxHeight:"240px",marginBottom:"8px"}}>{promptDiag}</div>
                       {hasFatalPromptIssue()?(
                         <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
-                          <button className="t-btn t-btn-g" style={{flex:1,padding:"11px"}} onClick={function(){doPromptFix("診断で指摘された致命的な問題のみを修正してください");}} disabled={!!loading}>{loading==="promptFix"?"修正中...":"AIが自動修正する（致命的問題のみ）"}</button>
+                          <button className="t-btn t-btn-g" style={{flex:1,padding:"11px"}} onClick={function(){doPromptFix("以下の診断結果の致命的な問題のみを修正してください。ユーザーが選択したジャンル・キーワード・設定は変更しないでください。\n\n【診断結果】\n"+promptDiag);}} disabled={!!loading}>{loading==="promptFix"?"修正中...":"AIが自動修正する（致命的問題のみ）"}</button>
                         </div>
                       ):(
                         <div>
-                          <div className="t-info" style={{marginBottom:"8px",borderColor:"rgba(126,200,126,.2)"}}>✅ 致命的な問題はありません。完成度は十分です。</div>
-                          <button className="t-btn t-btn-gh" style={{width:"100%",marginBottom:"8px"}} onClick={function(){setTab("keywords");}}>KEYWORDSタブで細かく調整する</button>
+                          <div className="t-info" style={{marginBottom:"8px",borderColor:"rgba(126,200,126,.2)"}}>✅ 致命的な問題はありません。<br/>雰囲気・ジャンル感・楽器・テンポを調整したい場合はCREATEのジャンル・詳細設定またはKEYWORDSから行ってください。</div>
+                          <button className="t-btn t-btn-gh" style={{width:"100%",marginBottom:"8px"}} onClick={function(){setTab("keywords");setFromKeywords(true);}}>KEYWORDSで調整する</button>
                         </div>
                       )}
                       {promptDiagCount>=2&&hasFatalPromptIssue()&&(
@@ -1299,30 +1373,7 @@ export default function App(){
                       {promptOut&&!promptOut.startsWith("エラー")&&<button className={"t-btn "+(copyOk==="prompt2"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px",marginTop:"8px"}} onClick={function(){doCopy(getPromptOnly(),"prompt2");}}>{copyLabel("prompt2","修正済みプロンプトをコピーする")}</button>}
                     </div>
                   )}
-                  <div className="t-div"></div>
-                  <div className="t-step-label">CLIP SETTINGS（任意）</div>
-                  <div className="t-info">SNS・ショート動画向けのクリップ用プロンプトを別途生成できる。通常のプロンプトとは独立して出力される。</div>
-                  <div className="t-q">
-                    <div className="t-ql" style={{marginBottom:"6px"}}>秒数</div>
-                    <div className="t-chips">
-                      <div className={"t-chip"+(clipSec===null?" on":"")} onClick={function(){setClipSec(null);}}><div className="t-dot"></div>AIにおまかせ</div>
-                      {CLIP_SECS.map(function(s){return <div key={s} className={"t-chip"+(clipSec===s?" on":"")} onClick={function(){setClipSec(s);}}><div className="t-dot"></div>{s}秒</div>;})}
-                    </div>
-                  </div>
-                  <div className="t-q">
-                    <div className="t-ql" style={{marginBottom:"6px"}}>使用する部分</div>
-                    <div className="t-chips">
-                      <div className={"t-chip"+(clipSection===0?" on":"")} onClick={function(){setClipSection(0);}}><div className="t-dot"></div>AIにおまかせ</div>
-                      {getEnabledParts().map(function(tag,i){return <div key={i} className={"t-chip"+(clipSection===i+1?" on":"")} onClick={function(){setClipSection(i+1);}}><div className="t-dot"></div>{tag}</div>;})}
-                    </div>
-                  </div>
-                  <button className="t-btn t-btn-g" onClick={doClipPrompt} disabled={!!loading||!promptOut||promptOut.startsWith("エラー")} style={{width:"100%",padding:"11px"}}>{loading==="clip"?"生成中...":"クリップ用プロンプトを生成する"}</button>
-                  {clipPrompt&&(
-                    <div>
-                      <textarea readOnly value={clipPrompt} style={{minHeight:"120px",maxHeight:"200px",background:"rgba(200,80,192,0.04)",borderColor:"rgba(200,80,192,0.2)",color:"var(--tx)",cursor:"text",fontFamily:"'Space Grotesk',sans-serif",fontSize:"11px",marginBottom:"8px"}}/>
-                      <button className={"t-btn "+(copyOk==="clip"?"t-btn-ok":"t-btn-g")} style={{width:"100%",padding:"12px"}} onClick={function(){doCopy(clipPrompt,"clip");}}>{copyLabel("clip","クリップ用プロンプトをコピーする")}</button>
-                    </div>
-                  )}
+
                   </div>
                   )}
                 </div>
@@ -1364,7 +1415,7 @@ export default function App(){
                 </div>
               </div>
 
-              {["STEP 0でテーマ確認→STEP 1で歌詞生成→STEP 2で2段階チェック・修正→STEP 3タイトル→STEP 4ひらがな変換→STEP 5プロンプト生成→STEP 6最終チェック・クリップ設定→STEP 7世界観カード。","歌詞とプロンプトのチェックは完全に独立。互いに影響しない。","世界観カードはChatGPT・Claude・Geminiに貼り付けて画像・映像プロンプトの作成に使える。"].map(function(t,i){
+              {["STEP 0でテーマ確認→STEP 1で歌詞生成→STEP 2で歌詞チェック・編集→STEP 3タイトル→STEP 4ひらがな変換→STEP 5プロンプト生成→STEP 6プロンプト最終チェック→STEP 7世界観カード。","歌詞とプロンプトのチェックは完全に独立。互いに影響しない。","世界観カードはChatGPT・Claude・Geminiに貼り付けて画像・映像プロンプトの作成に使える。"].map(function(t,i){
                 return <div key={i} className="t-tip"><span className="t-tip-m">—</span><span>{t}</span></div>;
               })}
             </div>
@@ -1401,15 +1452,19 @@ export default function App(){
                   <div className="t-s">
                     <div className="t-sh"><span className="t-sn">EXTRA KEYWORDS</span><span className="t-st">キーワードを追加する</span><span className="t-sh2">{selKw.length}語選択中</span></div>
                     <div className="t-sb">
-                      {Object.entries(EXTRA_KW).map(function(entry){return (
-                        <div className="t-kw-s" key={entry[0]}>
-                          <div className="t-kw-t">{entry[0]}</div>
-                          <div className="t-kw-g">{entry[1].map(function(k){return <div key={k} className={"t-kw"+(selKw.includes(k)?" on":"")} onClick={function(){togKw(k);}}>{k}</div>;})}</div>
-                        </div>
-                      );})}
+                      {Object.entries(EXTRA_KW).map(function(entry){
+                        const catDesc:{[k:string]:string}={"EMOTION":"感情や心情を強化します","INSTRUMENT":"使用する楽器の雰囲気を強化します","ATMOSPHERE":"情景や世界観を強化します"};
+                        return (
+                          <div className="t-kw-s" key={entry[0]}>
+                            <div className="t-kw-t">{entry[0]}</div>
+                            {catDesc[entry[0]]&&<div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px"}}>{catDesc[entry[0]]}</div>}
+                            <div className="t-kw-g">{entry[1].map(function(item){const k=item.en;return <div key={k} className={"t-kw"+(selKw.includes(k)?" on":"")} onClick={function(){togKw(k);}} style={{display:"flex",flexDirection:"column",gap:"1px",padding:"6px 8px"}}><span>{k}</span><span style={{fontSize:"8px",opacity:.65}}>{item.ja}</span></div>;})}</div>
+                          </div>
+                        );
+                      })}
                       <div className="t-div"></div>
-                      <div className="t-q"><div className="t-ql">自由入力</div><textarea rows={2} placeholder="追加したいキーワードを英語で入力（カンマ区切り）" value={extraKw} onChange={function(e){setExtraKw(e.target.value);}}/></div>
-                      <button className="t-btn t-btn-g" onClick={function(){setTab("generate");}}>GENERATEタブに戻る（キーワードを反映）</button>
+                      <div className="t-q"><div className="t-ql">自由入力</div><textarea rows={2} placeholder="追加したいキーワードを英語で入力（カンマ区切り）" value={extraKw} onChange={function(e){setExtraKw(e.target.value);setKeywordsChanged(true);}}/></div>
+                      <button className="t-btn t-btn-g" onClick={function(){setTab("generate");setFromKeywords(true);}}>プロンプト再生成へ進む</button>
                     </div>
                   </div>
 
@@ -1420,7 +1475,7 @@ export default function App(){
                       {BLEND_MAP.map(function(b,i){return(
                         <div key={i} className="t-guide-item">
                           <div className="t-guide-h">{b.name}</div>
-                          <div className="t-guide-txt">{b.blend.join(" × ")} でミックス<br/><span style={{fontSize:"10px",color:"var(--txd)"}}>キーワード: {b.promptKw}</span></div>
+                          <div className="t-guide-txt">{b.blend.map(function(id){const g=GENRES.find(function(x){return x.id===id;});return g?g.name:id;}).join(" × ")} でミックス<br/><span style={{fontSize:"10px",color:"var(--txd)"}}>キーワード: {b.promptKw}</span></div>
                         </div>
                       );})}
                     </div>
@@ -1440,7 +1495,7 @@ export default function App(){
                   {REVISE_PATTERNS.map(function(p){return (
                     <div className="t-pat" key={p.num}>
                       <div className="t-pat-h"><span className="t-pat-n">PATTERN {p.num}</span><span className="t-pat-t">{p.title}</span></div>
-                      <div className="t-pat-b">{p.desc}<div className="t-pat-ex">{p.ex}</div><button className="t-pat-ins" onClick={function(){insertPattern(p.qi,p.num);}}>INSERT →</button>{insertOk===p.num&&<span className="t-ins-ok">✓ チャットに挿入しました</span>}</div>
+                      <div className="t-pat-b">{p.desc}<div className="t-pat-ex">{p.ex}</div><button className="t-pat-ins" onClick={function(){setTab("generate");setInsertOk(p.num);setTimeout(function(){setInsertOk(null);},2000);}}>→ GENERATEチャットへ</button>{insertOk===p.num&&<span className="t-ins-ok">✓ GENERATEタブへ移動しました</span>}</div>
                     </div>
                   );})}
                 </div>
@@ -1464,7 +1519,7 @@ export default function App(){
                     {h:"推奨とは",t:"できれば入力してほしい項目です。入力するほど歌詞のリアリティと深みが増します。"},
                     {h:"任意とは",t:"こだわりたい人向けの項目です。空欄でもAIが最適な判断をします。"},
                     {h:"曲の構成用語について",t:"Verse（バース）＝ Aメロ：物語の導入部分\nPre-Chorus（プリコーラス）＝ Bメロ：サビへの橋渡し\nChorus（コーラス）＝ サビ：曲のメインフレーズ\nBridge（ブリッジ）＝ Cメロ：展開・転換部分\nLast Chorus（ラストコーラス）＝ 大サビ：最後のクライマックス\nOutro（アウトロ）＝ エンディング：曲の締め\nIntro Chorus ＝ 冒頭にサビを持ってくる演出\n\n※Aメロ・Bメロ・サビ・Cメロは日本での呼び方です。"},
-                    {h:"制作フロー",t:"STEP 0: テーマをAIと確認（ズレがないか）\nSTEP 1: 歌詞を生成（または既存の歌詞を入力）\nSTEP 2: 2段階チェック（STAGE 1診断→STAGE 2修正）\nSTEP 3: タイトルを決める（再生成・自作も可）\nSTEP 4: ひらがな変換\nSTEP 5: 音楽生成AIプロンプトを生成（ジャンル提案も同時出力）\nSTEP 6: プロンプト最終チェック・クリップ設定\nSTEP 7: 曲の世界観カード（画像・映像制作用）"},
+                    {h:"制作フロー",t:"STEP 0: テーマをAIと確認（ズレがないか）\nSTEP 1: 歌詞を生成（または既存の歌詞を入力）\nSTEP 2: 2段階チェック（STAGE 1診断→STAGE 2修正）\nSTEP 3: タイトルを決める（再生成・自作も可）\nSTEP 4: ひらがな変換\nSTEP 5: 音楽生成AIプロンプトを生成（ジャンル提案も同時出力）\nSTEP 6: プロンプト最終チェック\nSTEP 7: 曲の世界観カード（画像・映像制作用）"},
                     {h:"2段階チェックについて",t:"STAGE 1では問題点のリストアップのみ行う（修正しない）。診断レポートを見て、全部直すか特定の項目だけ直すかをSTAGE 2で指示する。これにより意図しない変更を防ぐ。"},
                     {h:"ジャンルの決め方",t:"3つのモードがある。\n①AIにおまかせ：素材から最適なジャンルをAIが判断（ジャンルがわからない人はこれ）\n②選んで決める：複数選択可。選んだ順に主従が決まり、掛け合わせて生成する（例：シティポップ主×R&B従）\n③カスタム入力：ジャンル名とキーワードを自由に指定\n選ばなくてもAIにおまかせで生成できる。"},
                     {h:"詳細設定について",t:"CREATEのSETTINGS内「詳細設定を開く」の中にある項目は全て任意。選ばなくてもAIが補完するが、選ぶほど意図に近い出力になる。選んだ内容は歌詞・音楽生成AIプロンプト・最終チェックの全てに反映される。"},
