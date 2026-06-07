@@ -684,8 +684,7 @@ export default function App(){
         setLyric(newLyric);setLyricChanged(true);setLyricDiagnosis("");setLyricDiagCount(0);
         setChatEditDisplay(function(prev){return prev.concat([{role:"assistant",content:"✅ 歌詞を反映しました。STEP2の診断ボタンで再診断できます。"}]);});
       }else{
-        setChatEditDisplay(function(prev){return prev.concat([{role:"assistant",content:"⚠ 修正済み歌詞全文が見つからなかったため反映できませんでした。
-もう一度「修正後の歌詞全文も含めて[Verse 1]から出力してください」と指示してください。"}]);});
+        setChatEditDisplay(function(prev){return prev.concat([{role:"assistant",content:"⚠ 修正済み歌詞全文が見つからなかったため反映できませんでした。\nもう一度「修正後の歌詞全文も含めて[Verse 1]から出力してください」と指示してください。"}]);});
       }
     }else{
       setChatEditDisplay(function(prev){return prev.concat([{role:"assistant",content:"⚠ 修正済み歌詞全文が見つからなかったため反映できませんでした。
