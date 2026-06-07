@@ -844,7 +844,7 @@ export default function App(){
 
   return (
     <div>
-      <style>{S}</style>
+      <style dangerouslySetInnerHTML={{__html:S}} />
       <div className="t">
         <div className="t-bg"></div>
         <div className="t-w">
