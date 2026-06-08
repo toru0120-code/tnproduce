@@ -1510,6 +1510,14 @@ export default function App(){
                   <div style={{marginBottom:"12px",padding:"14px 16px",background:"var(--sf2)",border:"1px solid var(--bd)",borderRadius:"12px"}}>
                     <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>既存の歌詞を使う（任意）</div>
                     <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"8px"}}>自分で書いた歌詞がある場合はここに入力。Q01が空でも使用可能。STEP2以降が使えます。</div>
+                    {/* ①②統合バナー：生成歌詞と既存歌詞が両方ある場合 */}
+                    {ownLyric.trim()&&lyric.trim()&&(
+                      <div className="t-info" style={{marginBottom:"8px",borderColor:"rgba(200,80,192,.3)",fontSize:"10px"}}>
+                        ⚠ <strong>生成済み歌詞が優先されています。</strong>この欄は現在使用されていません。<br/>
+                        既存歌詞ルートでAI修正を行った場合、最新の歌詞はSTEP1の生成歌詞エリアに反映されています。この欄は修正前の元歌詞です。<br/>
+                        既存歌詞を使う場合は上の生成済み歌詞エリアをリセットしてください。
+                      </div>
+                    )}
                     <textarea rows={5} placeholder={"[Verse 1]\nここに歌詞を貼り付け..."} value={ownLyric} onChange={function(e){
                       const newVal=e.target.value;
                       if(originalLyric.trim()&&newVal!==ownLyric)setOwnLyricChanged(true);
@@ -1523,7 +1531,9 @@ export default function App(){
                     )}
                     {ownLyric.trim()&&(
                       <div style={{display:"flex",alignItems:"center",gap:"8px",marginTop:"4px"}}>
-                        <div style={{fontSize:"10px",color:"var(--gr)",flex:1}}>✅ 既存の歌詞が入力されています。STEP2以降が使えます。</div>
+                        <div style={{fontSize:"10px",color:lyric.trim()?"var(--txd)":"var(--gr)",flex:1}}>
+                          {lyric.trim()?"📌 元歌詞（参照用）":"✅ 既存の歌詞が入力されています。STEP2以降が使えます。"}
+                        </div>
                         <button className="t-btn t-btn-rd" style={{fontSize:"9px",padding:"5px 10px"}} onClick={resetOwnLyric}>リセット</button>
                       </div>
                     )}
