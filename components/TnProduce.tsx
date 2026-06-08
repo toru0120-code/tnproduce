@@ -924,6 +924,13 @@ export default function App(){
     else setKeywordsMessage("↩ 初期プロンプトに戻しました。");
   }
 
+  function togglePromptFix(fix:string){
+    setSelectedPromptFixes(function(prev){
+      return prev.includes(fix)?prev.filter(function(x){return x!==fix;}):prev.concat([fix]);
+    });
+    setQuickFixMessage("");
+  }
+
   async function applyPromptAdjustments(section:"quickfix"|"keywords"){
     const currentPrompt=getPromptOnly();
     if(!currentPrompt||currentPrompt.startsWith("エラー")){alert("先にプロンプトを生成してください。");return;}
