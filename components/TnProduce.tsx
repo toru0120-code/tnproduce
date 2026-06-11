@@ -172,9 +172,9 @@ textarea:focus,input:focus{border-color:rgba(200,80,192,.4);background:rgba(200,
 .t-mix-item:last-child{border-bottom:none;}
 .t-mix-cat{font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--g);letter-spacing:.15em;opacity:.7;text-transform:uppercase;margin-bottom:8px;margin-top:20px;font-weight:700;padding:4px 8px;background:var(--gd);border-radius:4px;display:inline-block;}
 .t-mix-cat:first-child{margin-top:0;}
-.t-mix-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px;color:var(--txm);padding:6px 0;border-bottom:1px solid rgba(30,30,56,.5);}
+.t-mix-row{display:grid;grid-template-columns:1fr 1fr 1fr 1.2fr;gap:6px;font-size:10px;color:var(--txm);padding:6px 0;border-bottom:1px solid rgba(30,30,56,.5);}
 .t-mix-row:last-child{border-bottom:none;}
-.t-mix-head{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--txd);letter-spacing:.08em;padding:4px 0 8px;border-bottom:1px solid var(--bd);margin-bottom:4px;}
+.t-mix-head{display:grid;grid-template-columns:1fr 1fr 1fr 1.2fr;gap:6px;font-family:'Space Grotesk',sans-serif;font-size:8px;color:var(--txd);letter-spacing:.08em;padding:4px 0 8px;border-bottom:1px solid var(--bd);margin-bottom:4px;}
 .t-notice{background:linear-gradient(135deg,rgba(200,80,192,.08),rgba(65,88,208,.08));border:1px solid rgba(200,80,192,.2);border-radius:12px;padding:16px 18px;margin-bottom:24px;position:relative;}
 .t-notice-close{position:absolute;top:10px;right:12px;font-family:'Space Grotesk',sans-serif;font-size:9px;color:var(--txd);cursor:pointer;background:transparent;border:none;letter-spacing:.06em;}
 .t-notice-close:hover{color:var(--txm);}
@@ -191,113 +191,150 @@ type Genre = {
   lyricStyle: string;
   checkKw: string;
   cat: string;
+  ja_desc: string; // ユーザー向け説明文
 };
 
 const GENRES: Genre[] = [
   // ポップ系
-  {id:"jpop",name:"J-POP",cat:"ポップ系",sunoKw:"j-pop, japanese pop, catchy melody, bright emotional, mainstream pop",lyricStyle:"共感しやすい言葉・キャッチーで明快なサビ・感情に直接訴える表現",checkKw:"J-POPらしいキャッチさ・わかりやすさ・明快なサビ・共感性"},
-  {id:"kpop",name:"K-POP",cat:"ポップ系",sunoKw:"k-pop, korean pop, catchy hook, girl group, boy band, addictive melody",lyricStyle:"キャッチーなフック・日韓英ミックス・感情的なサビ・スタイリッシュな表現",checkKw:"K-POPらしいキャッチさ・スタイリッシュさ・フックの強さ"},
-  {id:"anison",name:"アニソン",cat:"ポップ系",sunoKw:"anime song, j-anime, energetic, emotional, orchestral pop",lyricStyle:"希望・勇気・仲間・夢などのテーマ・キャッチーで覚えやすいサビ",checkKw:"アニソンらしいエネルギー・メッセージ性・キャッチーなサビ"},
-  {id:"kayokyoku",name:"歌謡曲 / 昭和歌謡",cat:"ポップ系",sunoKw:"japanese city pop, showa era, enka-influenced pop, retro japanese",lyricStyle:"情景描写・間接的な感情表現・昭和的な言葉遣い・余韻",checkKw:"歌謡曲らしい情景描写・余韻・昭和的な語感"},
-  {id:"citypop",name:"シティポップ",cat:"ポップ系",sunoKw:"city pop, japanese 80s, summer night, groovy, mellow, retro city",lyricStyle:"都会的・洗練された言葉・夜・夏・ドライブ・ノスタルジー",checkKw:"シティポップらしい都会的な語感・洗練・レトロ感"},
-  {id:"neocitypop",name:"ネオシティポップ",cat:"ポップ系",sunoKw:"modern city pop, neo soul, jazzy, smooth, contemporary japanese pop",lyricStyle:"現代的な都会感・R&Bの感情深さとポップの聴きやすさの融合",checkKw:"ネオシティポップらしい洗練・グルーヴ・現代感"},
+  {id:"jpop",name:"J-POP",cat:"ポップ系",ja_desc:"日本の主流ポップス。キャッチーで聴きやすく、感情に直接訴えるサビが特徴。幅広い世代に届く王道スタイル。",sunoKw:"j-pop, japanese pop, catchy melody, bright emotional, mainstream pop",lyricStyle:"共感しやすい言葉・キャッチーで明快なサビ・感情に直接訴える表現",checkKw:"J-POPらしいキャッチさ・わかりやすさ・明快なサビ・共感性"},
+  {id:"kpop",name:"K-POP",cat:"ポップ系",ja_desc:"韓国発のポップス。スタイリッシュなビジュアルと中毒性の高いフックが特徴。日韓英語ミックスの歌詞が多い。",sunoKw:"k-pop, korean pop, catchy hook, girl group, boy band, addictive melody",lyricStyle:"キャッチーなフック・日韓英ミックス・感情的なサビ・スタイリッシュな表現",checkKw:"K-POPらしいキャッチさ・スタイリッシュさ・フックの強さ"},
+  {id:"anison",name:"アニソン",cat:"ポップ系",ja_desc:"アニメの主題歌・挿入歌スタイル。希望・勇気・仲間をテーマにしたキャッチーで覚えやすい楽曲。エネルギーとメッセージ性が強い。",sunoKw:"anime song, j-anime, energetic, emotional, orchestral pop",lyricStyle:"希望・勇気・仲間・夢などのテーマ・キャッチーで覚えやすいサビ",checkKw:"アニソンらしいエネルギー・メッセージ性・キャッチーなサビ"},
+  {id:"vocaloid",name:"ボカロ",cat:"ポップ系",ja_desc:"初音ミクなどのボイスシンセサイザーを使った電子音楽。現実と非現実の境界を行く独特の世界観と中性的な感情表現が特徴。",sunoKw:"vocaloid, vocaloid style, electronic pop, synthetic vocal, digital emotion, anime influenced, japanese",lyricStyle:"電子的・デジタルな世界観・現実と非現実の境界・中性的な感情・独特の言葉遣いや造語・内省的・哲学的・高速な語彙展開",checkKw:"ボカロらしい電子的な世界観・中性的な感情表現・デジタル感・独特の語感"},
+  {id:"citypop",name:"シティポップ",cat:"ポップ系",ja_desc:"1980年代の日本発・都会的でおしゃれな音楽。夜・夏・ドライブをテーマにしたノスタルジックでグルーヴィーなスタイル。",sunoKw:"city pop, japanese 80s, summer night, groovy, mellow, retro city",lyricStyle:"都会的・洗練された言葉・夜・夏・ドライブ・ノスタルジー",checkKw:"シティポップらしい都会的な語感・洗練・レトロ感"},
+  {id:"neocitypop",name:"ネオシティポップ",cat:"ポップ系",ja_desc:"現代版シティポップ。R&Bやジャズの感情的な深みとポップの聴きやすさを融合した、洗練された都会サウンド。",sunoKw:"modern city pop, neo soul, jazzy, smooth, contemporary japanese pop",lyricStyle:"現代的な都会感・R&Bの感情深さとポップの聴きやすさの融合",checkKw:"ネオシティポップらしい洗練・グルーヴ・現代感"},
+  {id:"showakayo",name:"昭和歌謡",cat:"ポップ系",ja_desc:"昭和時代の日本歌謡曲スタイル。情景描写と間接的な感情表現が特徴の懐かしさあふれる音楽。演歌の影響を受けたポップス。",sunoKw:"japanese city pop, showa era, enka-influenced pop, retro japanese, kayokyoku",lyricStyle:"情景描写・間接的な感情表現・昭和的な言葉遣い・余韻・懐かしさ",checkKw:"昭和歌謡らしい情景描写・余韻・昭和的な語感・懐かしさ"},
+  {id:"idolpop",name:"アイドルポップ",cat:"ポップ系",ja_desc:"日本のアイドルが歌うポップス。明るく元気で夢や笑顔をテーマにしたキャッチーなサウンド。ファンへの想いを込めた歌詞が多い。",sunoKw:"idol pop, japanese idol, cute, cheerful, kawaii, bright energetic, j-pop idol",lyricStyle:"明るく元気な言葉・夢・笑顔・ファンへの想い・キャッチーで覚えやすい",checkKw:"アイドルポップらしい明るさ・かわいさ・キャッチーさ・元気"},
   // R&B・ソウル系
-  {id:"rnb",name:"R&B / ネオソウル",cat:"R&B・ソウル系",sunoKw:"R&B, neo soul, smooth groove, soulful, rhythmic, sensual",lyricStyle:"リズムに乗る言葉選び・グルーヴ感・感情的で深みのある表現",checkKw:"R&Bらしいグルーヴ感・リズムに乗る語感・感情の深さ"},
-  {id:"lofi",name:"ローファイ",cat:"R&B・ソウル系",sunoKw:"lofi hip hop, chill, nostalgic, mellow, laid back, warm vinyl",lyricStyle:"内省的・日常の断片・穏やかで温かい語感・過去への眼差し",checkKw:"ローファイらしいチル感・内省性・温かさ"},
+  {id:"rnb",name:"R&B・ネオソウル",cat:"R&B・ソウル系",ja_desc:"リズム＆ブルースとネオソウルの融合。グルーヴィーで感情的な深みのある表現が特徴。リズムに乗った言葉選びが重要。",sunoKw:"R&B, neo soul, smooth groove, soulful, rhythmic, sensual",lyricStyle:"リズムに乗る言葉選び・グルーヴ感・感情的で深みのある表現",checkKw:"R&Bらしいグルーヴ感・リズムに乗る語感・感情の深さ"},
+  {id:"lofi",name:"ローファイ",cat:"R&B・ソウル系",ja_desc:"あえて音質を落としたチルアウト系音楽。内省的で日常の断片を切り取った穏やかな世界観。深夜のひとり時間に似合う。",sunoKw:"lofi hip hop, chill, nostalgic, mellow, laid back, warm vinyl",lyricStyle:"内省的・日常の断片・穏やかで温かい語感・過去への眼差し",checkKw:"ローファイらしいチル感・内省性・温かさ"},
+  {id:"urbanpop",name:"アーバンポップ",cat:"R&B・ソウル系",ja_desc:"都会的でスタイリッシュな現代ポップス。R&Bの感情表現とポップの聴きやすさを融合。クールで洗練された大人の音楽。",sunoKw:"urban pop, contemporary r&b, modern pop, sleek, sophisticated, city vibes",lyricStyle:"都会的でスタイリッシュな言葉・洗練・感情とクールさの共存",checkKw:"アーバンポップらしい都会感・洗練・スタイリッシュさ"},
+  {id:"gospel",name:"ゴスペル・ソウル",cat:"R&B・ソウル系",ja_desc:"魂の解放と感情の爆発を表現する音楽。力強い歌声と感謝・希望・救いのメッセージが特徴。圧倒的な感情表現ができる。",sunoKw:"gospel, soul music, powerful vocals, choir, emotional, spiritual, uplifting",lyricStyle:"魂からの叫び・解放・感謝・希望・力強く感情的な言葉",checkKw:"ゴスペルらしい力強さ・感情の解放・魂の表現"},
   // ロック系
-  {id:"rock",name:"ロック",cat:"ロック系",sunoKw:"rock, electric guitar, energetic, powerful drums, intense",lyricStyle:"エネルギーと疾走感・直接的で力強い言葉・感情の爆発",checkKw:"ロックらしいエネルギー・力強さ・直接的な言葉"},
-  {id:"altrock",name:"オルタナティブロック",cat:"ロック系",sunoKw:"alternative rock, indie rock, grunge influenced, distorted guitar, introspective",lyricStyle:"内省的・社会への問い・曖昧な感情・詩的でひねりのある表現",checkKw:"オルタナらしい内省性・ひねりのある語感・曖昧さ"},
-  {id:"metal",name:"メタル / ハードロック",cat:"ロック系",sunoKw:"metal, hard rock, heavy guitar, aggressive, powerful, driving rhythm",lyricStyle:"力強い言葉・怒り・闘志・克服のテーマ・直接的で激しい表現",checkKw:"メタルらしい力強さ・激しさ・闘志のある言葉"},
-  {id:"visual",name:"ヴィジュアル系",cat:"ロック系",sunoKw:"visual kei, japanese rock, dramatic, dark romantic, theatrical",lyricStyle:"耽美・退廃・詩的な言葉・闇と光の対比・感情の極端な表現",checkKw:"V系らしい耽美さ・退廃的な語感・詩的表現"},
-  {id:"indiepop",name:"インディーポップ",cat:"ロック系",sunoKw:"indie pop, dreamy, bittersweet, jangly guitar, lo-fi warmth, indie rock",lyricStyle:"詩的でおしゃれな言葉・日常・青春・ノスタルジー・こだわり感",checkKw:"インディーポップらしいドリーミーさ・おしゃれ感・詩的表現"},
-  {id:"poppunk",name:"ポップパンク",cat:"ロック系",sunoKw:"pop punk, punk energy, catchy chorus, energetic, youth, rebellious",lyricStyle:"青春・反骨・エネルギッシュ・直接的で熱い言葉・キャッチーなサビ",checkKw:"ポップパンクらしいエネルギー・青春感・キャッチーさ"},
+  {id:"rock",name:"ロック",cat:"ロック系",ja_desc:"エレキギターを中心にした力強い音楽。エネルギーと疾走感・直接的で力強い言葉で感情を爆発させるスタイル。",sunoKw:"rock, electric guitar, energetic, powerful drums, intense",lyricStyle:"エネルギーと疾走感・直接的で力強い言葉・感情の爆発",checkKw:"ロックらしいエネルギー・力強さ・直接的な言葉"},
+  {id:"altrock",name:"オルタナティブロック",cat:"ロック系",ja_desc:"主流から外れた実験的なロック。内省的・社会への問い・曖昧な感情をひねりのある詩的な言葉で表現する。",sunoKw:"alternative rock, indie rock, grunge influenced, distorted guitar, introspective",lyricStyle:"内省的・社会への問い・曖昧な感情・詩的でひねりのある表現",checkKw:"オルタナらしい内省性・ひねりのある語感・曖昧さ"},
+  {id:"visual",name:"ヴィジュアル系",cat:"ロック系",ja_desc:"日本独自の耽美で退廃的なロック。闇と光の対比・感情の極端な表現・詩的な言葉が特徴の唯一無二の世界観。",sunoKw:"visual kei, japanese rock, dramatic, dark romantic, theatrical",lyricStyle:"耽美・退廃・詩的な言葉・闇と光の対比・感情の極端な表現",checkKw:"V系らしい耽美さ・退廃的な語感・詩的表現"},
+  {id:"metal",name:"メタル・ハードロック",cat:"ロック系",ja_desc:"重いギターリフと激しいドラムが特徴の音楽。怒り・闘志・克服をテーマにした力強く激しい表現が得意。",sunoKw:"metal, hard rock, heavy guitar, aggressive, powerful, driving rhythm",lyricStyle:"力強い言葉・怒り・闘志・克服のテーマ・直接的で激しい表現",checkKw:"メタルらしい力強さ・激しさ・闘志のある言葉"},
+  {id:"poppunk",name:"ポップパンク",cat:"ロック系",ja_desc:"キャッチーなメロディとパンクのエネルギーを融合。青春・反骨・エネルギッシュな言葉とサビが特徴の聴きやすいロック。",sunoKw:"pop punk, punk energy, catchy chorus, energetic, youth, rebellious",lyricStyle:"青春・反骨・エネルギッシュ・直接的で熱い言葉・キャッチーなサビ",checkKw:"ポップパンクらしいエネルギー・青春感・キャッチーさ"},
+  {id:"emorock",name:"エモロック",cat:"ロック系",ja_desc:"感情をむき出しにした告白的なロック。傷・孤独・救いを求める言葉を直接的に表現する。心の痛みをそのまま音にするスタイル。",sunoKw:"emo rock, emotional rock, confessional, raw emotion, melodic punk, heartfelt",lyricStyle:"むき出しの感情・告白的・傷・孤独・救いを求める言葉・直接的な痛み",checkKw:"エモらしいむき出しの感情・告白的な表現・傷と痛みの語感"},
+  {id:"indiepop",name:"インディーポップ",cat:"ロック系",ja_desc:"独立系レーベル発のおしゃれで詩的なポップス。日常・青春・ノスタルジーをこだわりのある言葉で表現するドリーミーなスタイル。",sunoKw:"indie pop, dreamy, bittersweet, jangly guitar, lo-fi warmth, indie rock",lyricStyle:"詩的でおしゃれな言葉・日常・青春・ノスタルジー・こだわり感",checkKw:"インディーポップらしいドリーミーさ・おしゃれ感・詩的表現"},
+  {id:"punk",name:"パンク・メロコア",cat:"ロック系",ja_desc:"荒削りで疾走感のある反骨精神の音楽。Hi-STANDARD系のメロコアも含む。怒り・青春の焦燥感をシンプルに直接表現する。",sunoKw:"punk rock, melodic hardcore, fast tempo, raw energy, japanese punk, melodycore",lyricStyle:"疾走感・反骨・怒り・叫び・シンプルで直接的・青春の焦燥感",checkKw:"パンクらしい疾走感・荒削りなエネルギー・反骨精神・直接性"},
   // バラード・アコースティック系
-  {id:"ballad",name:"バラード",cat:"バラード・アコースティック系",sunoKw:"ballad, slow emotional, piano led, heartfelt, cinematic strings",lyricStyle:"感情をゆっくり丁寧に描写・余韻を大切に・言葉の重みを優先",checkKw:"バラードらしい感情の重さ・丁寧な描写・余韻のある言葉"},
-  {id:"acoustic",name:"アコースティック",cat:"バラード・アコースティック系",sunoKw:"acoustic, folk, fingerpicking guitar, intimate, warm, singer-songwriter",lyricStyle:"温かく親密な語感・日常の細部・素朴で誠実な言葉",checkKw:"アコースティックらしい温かさ・素朴さ・親密感"},
-  {id:"jazzpop",name:"ジャズポップ",cat:"バラード・アコースティック系",sunoKw:"jazz pop, sophisticated, smooth, piano jazz, bossa influenced, elegant",lyricStyle:"洗練された大人の言葉・おしゃれ・余韻・都会的な夜",checkKw:"ジャズポップらしい洗練・大人感・おしゃれな語感"},
-  {id:"bossanova",name:"ボサノバ",cat:"バラード・アコースティック系",sunoKw:"bossa nova, brazilian, nylon guitar, gentle, sophisticated, relaxed",lyricStyle:"穏やかで優雅な語感・自然・海・風・大人の余裕",checkKw:"ボサノバらしい穏やかさ・優雅さ・自然な語感"},
+  {id:"ballad",name:"バラード",cat:"バラード・アコースティック系",ja_desc:"感情をゆっくり丁寧に描写する叙情的な音楽。余韻と言葉の重みを大切にし、聴く人の心に深く刺さる表現が得意。",sunoKw:"ballad, slow emotional, piano led, heartfelt, cinematic strings",lyricStyle:"感情をゆっくり丁寧に描写・余韻を大切に・言葉の重みを優先",checkKw:"バラードらしい感情の重さ・丁寧な描写・余韻のある言葉"},
+  {id:"acoustic",name:"アコースティック",cat:"バラード・アコースティック系",ja_desc:"生楽器の温かみを活かした音楽。日常の細部を素朴で誠実な言葉で表現する親密なスタイル。弾き語りの空気感が特徴。",sunoKw:"acoustic, folk, fingerpicking guitar, intimate, warm, singer-songwriter",lyricStyle:"温かく親密な語感・日常の細部・素朴で誠実な言葉",checkKw:"アコースティックらしい温かさ・素朴さ・親密感"},
+  {id:"pianoballad",name:"ピアノバラード",cat:"バラード・アコースティック系",ja_desc:"ピアノを主役にした繊細で感情的な音楽。静寂・余白・涙をテーマにした美しく切ない世界観。感情の深みを引き出す。",sunoKw:"piano ballad, emotional piano, cinematic, solo piano, tender, dramatic",lyricStyle:"繊細で感情的な言葉・静寂・美しい余白・涙・切なさの奥にある温かさ",checkKw:"ピアノバラードらしい繊細さ・感情の深み・余白と余韻"},
+  {id:"folkpop",name:"フォークポップ",cat:"バラード・アコースティック系",ja_desc:"フォークの詩的な作家性とポップの聴きやすさを融合。米津玄師・あいみょん的な個性的なストーリーテリングが特徴。",sunoKw:"folk pop, singer-songwriter, acoustic storytelling, poetic, indie folk, heartfelt narrative",lyricStyle:"詩的で作家性の高い言葉・個人的なストーリーテリング・比喩と情景描写・誠実で独自の視点",checkKw:"フォークポップらしい詩的な作家性・個性的なストーリーテリング・誠実な言葉"},
+  {id:"jazzpop",name:"ジャズポップ",cat:"バラード・アコースティック系",ja_desc:"ジャズのエレガントさとポップの親しみやすさを融合。洗練された大人の言葉・都会的な夜の雰囲気が特徴。",sunoKw:"jazz pop, sophisticated, smooth, piano jazz, bossa influenced, elegant",lyricStyle:"洗練された大人の言葉・おしゃれ・余韻・都会的な夜",checkKw:"ジャズポップらしい洗練・大人感・おしゃれな語感"},
+  {id:"bossanova",name:"ボサノバ",cat:"バラード・アコースティック系",ja_desc:"ブラジル発の穏やかでエレガントな音楽。自然・海・風・大人の余裕をテーマにした優雅なスタイル。",sunoKw:"bossa nova, brazilian, nylon guitar, gentle, sophisticated, relaxed",lyricStyle:"穏やかで優雅な語感・自然・海・風・大人の余裕",checkKw:"ボサノバらしい穏やかさ・優雅さ・自然な語感"},
   // ヒップホップ・クラブ系
-  {id:"hiphop",name:"ヒップホップ",cat:"ヒップホップ・クラブ系",sunoKw:"hip hop, rap, urban, rhythmic flow, boom bap",lyricStyle:"ライム・フロー・韻を踏む言葉遊び・ストーリーテリング",checkKw:"ヒップホップらしいライム・フロー・韻の踏み方"},
-  {id:"edm",name:"EDM / ダンス",cat:"ヒップホップ・クラブ系",sunoKw:"EDM, dance, electronic, synth, club, energetic drop, euphoric",lyricStyle:"繰り返しのフック・シンプルで踊れる言葉・高揚感",checkKw:"EDMらしい高揚感・繰り返しの強さ・シンプルなフック"},
-  {id:"clubanthemgenre",name:"クラブアンセム",cat:"ヒップホップ・クラブ系",sunoKw:"club anthem, party, celebratory, upbeat, crowd energy, festival",lyricStyle:"高揚・祝祭・一体感・シンプルで力強いフック・前向きなエネルギー",checkKw:"クラブアンセムらしい高揚感・一体感・シンプルな力強さ"},
+  {id:"hiphop",name:"ヒップホップ",cat:"ヒップホップ・クラブ系",ja_desc:"ライムとフローが特徴のストリート音楽。韻を踏む言葉遊びとストーリーテリングで自己表現するスタイル。",sunoKw:"hip hop, rap, urban, rhythmic flow, boom bap",lyricStyle:"ライム・フロー・韻を踏む言葉遊び・ストーリーテリング",checkKw:"ヒップホップらしいライム・フロー・韻の踏み方"},
+  {id:"trap",name:"トラップ",cat:"ヒップホップ・クラブ系",ja_desc:"重低音の808ベースと細かいハイハットが特徴の現代ヒップホップ。クールで攻撃的・ストリートな自己主張が強いスタイル。",sunoKw:"trap, 808 bass, hi-hat rolls, dark hip hop, aggressive, modern rap",lyricStyle:"クールで攻撃的な言葉・ストリート・自己主張・短く鋭いフレーズ",checkKw:"トラップらしいクールさ・攻撃性・ストリート感"},
+  {id:"edm",name:"EDM・ダンス",cat:"ヒップホップ・クラブ系",ja_desc:"クラブやフェスで盛り上がるエレクトロニック・ダンス・ミュージック。高揚感あふれるドロップと繰り返しのフックが特徴。",sunoKw:"EDM, dance, electronic, synth, club, energetic drop, euphoric",lyricStyle:"繰り返しのフック・シンプルで踊れる言葉・高揚感",checkKw:"EDMらしい高揚感・繰り返しの強さ・シンプルなフック"},
+  {id:"futurebass",name:"Future Bass",cat:"ヒップホップ・クラブ系",ja_desc:"感情的でメロディアスな現代エレクトロニック音楽。希望と切なさが共存する浮遊感と明るい余韻が特徴。",sunoKw:"future bass, melodic electronic, emotional drops, synth waves, bright euphoric",lyricStyle:"感情的で浮遊感のある言葉・希望と切なさの共存・明るい余韻",checkKw:"Future Bassらしい浮遊感・感情的な高揚・明るい切なさ"},
+  {id:"clubanthemgenre",name:"クラブアンセム",cat:"ヒップホップ・クラブ系",ja_desc:"フロアを一体にする高揚感あふれる楽曲。祝祭・一体感・シンプルで力強いフックで前向きなエネルギーを表現。",sunoKw:"club anthem, party, celebratory, upbeat, crowd energy, festival",lyricStyle:"高揚・祝祭・一体感・シンプルで力強いフック・前向きなエネルギー",checkKw:"クラブアンセムらしい高揚感・一体感・シンプルな力強さ"},
+  {id:"eurobeat",name:"ユーロビート",cat:"ヒップホップ・クラブ系",ja_desc:"超高速テンポのイタロディスコ系電子音楽。パラパラダンスの音楽として日本でも親しまれる。疾走感と中毒性が特徴。",sunoKw:"eurobeat, hi-nrg, fast tempo, electronic dance, italo disco, energetic, japanese eurobeat",lyricStyle:"疾走感・高揚・ドライブ・恋愛・シンプルで繰り返しの強いフレーズ",checkKw:"ユーロビートらしい疾走感・ハイテンション・繰り返しの中毒性"},
   // 和系
-  {id:"enka",name:"演歌",cat:"和系",sunoKw:"enka, traditional japanese, emotional, kobushi, shamisen influenced",lyricStyle:"望郷・別れ・愛憎・情念・情景描写・こぶし回しを意識した言葉",checkKw:"演歌らしい情念・こぶし感・望郷・別れのテーマ"},
-  {id:"wagaku",name:"和風 / 和楽器",cat:"和系",sunoKw:"japanese traditional, shamisen, koto, shakuhachi, taiko drums, wa-style, feudal japan",lyricStyle:"日本的な情景・侘び寂び・季節感・古語や和の言葉遣い",checkKw:"和風らしい情景・侘び寂び・和の語感・季節感"},
+  {id:"enka",name:"演歌",cat:"和系",ja_desc:"日本の伝統的な歌謡音楽。望郷・別れ・愛憎・情念をこぶし回しを意識した情景描写で表現する日本固有のスタイル。",sunoKw:"enka, traditional japanese, emotional, kobushi, shamisen influenced",lyricStyle:"望郷・別れ・愛憎・情念・情景描写・こぶし回しを意識した言葉",checkKw:"演歌らしい情念・こぶし感・望郷・別れのテーマ"},
+  {id:"wagaku",name:"和風・和楽器",cat:"和系",ja_desc:"三味線・琴・尺八・太鼓などの和楽器を使った日本的な音楽。侘び寂び・季節感・古語を活かした独特の世界観。",sunoKw:"japanese traditional, shamisen, koto, shakuhachi, taiko drums, wa-style, feudal japan",lyricStyle:"日本的な情景・侘び寂び・季節感・古語や和の言葉遣い",checkKw:"和風らしい情景・侘び寂び・和の語感・季節感"},
   // その他
-  {id:"reggae",name:"レゲエ",cat:"その他",sunoKw:"reggae, jamaican, laid back groove, offbeat rhythm, roots, positive vibes",lyricStyle:"解放・自由・自然・愛・リラックス・シンプルで温かい言葉",checkKw:"レゲエらしいリラックス感・解放感・温かさ"},
-  {id:"custom",name:"カスタム",cat:"カスタム",sunoKw:"",lyricStyle:"",checkKw:""},
+  {id:"reggae",name:"レゲエ",cat:"その他",ja_desc:"ジャマイカ発の解放感あふれる音楽。自由・自然・愛・リラックスをテーマにしたゆったりとした温かいスタイル。",sunoKw:"reggae, jamaican, laid back groove, offbeat rhythm, roots, positive vibes",lyricStyle:"解放・自由・自然・愛・リラックス・シンプルで温かい言葉",checkKw:"レゲエらしいリラックス感・解放感・温かさ"},
+  {id:"latin",name:"ラテン",cat:"その他",ja_desc:"中南米発の情熱的でリズミカルな音楽。情熱・喜び・踊り・太陽・生命力あふれる言葉が特徴の明るいスタイル。",sunoKw:"latin pop, salsa, bossa nova influenced, passionate, rhythmic, warm tropical",lyricStyle:"情熱・喜び・踊り・愛・太陽・生命力あふれる言葉",checkKw:"ラテンらしい情熱・リズム感・明るさ・生命力"},
+  {id:"afrobeat",name:"アフロビート",cat:"その他",ja_desc:"西アフリカ発のグルーヴィーな音楽。土着的な温かさとリズムの躍動感が特徴。解放・喜び・コミュニティの一体感を表現。",sunoKw:"afrobeat, afropop, west african rhythm, groovy, percussive, global pop",lyricStyle:"解放・喜び・大地・リズム・コミュニティ・エネルギーあふれる表現",checkKw:"アフロビートらしいグルーヴ・土着的な温かさ・リズムの躍動感"},
+  {id:"darkelectro",name:"ダークエレクトロ",cat:"その他",ja_desc:"冷たく機械的な電子音楽。絶望・支配・孤立をテーマにした無機質で詩的な暗黒の世界観。ヴィジュアル系とも相性が良い。",sunoKw:"dark electronic, industrial, cold synth, dystopian, nine inch nails style, dark ambient",lyricStyle:"冷たく機械的な言葉・絶望・支配・孤立・無機質な感情表現・詩的な暗黒",checkKw:"ダークエレクトロらしい冷たさ・機械的な無機質感・ダークな世界観"},
+  {id:"custom",name:"カスタム",cat:"カスタム",ja_desc:"自由にジャンル名とキーワードを設定できます。",sunoKw:"",lyricStyle:"",checkKw:""},
 ];
 
 const GENRE_CATS = ["ポップ系","R&B・ソウル系","ロック系","バラード・アコースティック系","ヒップホップ・クラブ系","和系","その他"];
 
-const MIX_EXAMPLES = [
-  {cat:"ポップ系ミックス",items:[
-    {main:"J-POP",sub:"R&B・ネオソウル",image:"感情的でグルーヴィーなポップ"},
-    {main:"J-POP",sub:"アコースティック",image:"温かい弾き語り系ポップ"},
-    {main:"J-POP",sub:"ヒップホップ",image:"J-ラップ・邦楽ヒップホップ"},
-    {main:"K-POP",sub:"EDM・ダンス",image:"クラブ系アイドルポップ"},
-    {main:"K-POP",sub:"ヒップホップ",image:"K-ラップ・ガールズグループ系"},
-    {main:"アニソン",sub:"ロック",image:"アニメOP・ED系バンドサウンド"},
-    {main:"ネオシティポップ",sub:"ローファイ",image:"深夜の都会・チル系"},
-    {main:"ネオシティポップ",sub:"ジャズポップ",image:"おしゃれ夜景系"},
-    {main:"シティポップ",sub:"ボサノバ",image:"レトロおしゃれ・大人系"},
-    {main:"シティポップ",sub:"ジャズポップ",image:"昭和モダン・洗練系"},
-    {main:"歌謡曲・昭和歌謡",sub:"バラード",image:"現代歌謡バラード"},
-    {main:"歌謡曲・昭和歌謡",sub:"ジャズポップ",image:"昭和ジャズポップ"},
+// MIXパターン型定義
+type MixItem = {genres: string[]; image: string};
+type MixCat = {cat: string; items: MixItem[]};
+
+const MIX_EXAMPLES: MixCat[] = [
+  {cat:"🔥 人気・鉄板",items:[
+    {genres:["K-POP","R&B・ネオソウル","Future Bass"],image:"洗練された現代K-POP"},
+    {genres:["J-POP","エモロック","バラード"],image:"切ない青春ソング"},
+    {genres:["アニソン","ロック","エモロック"],image:"熱血アニメOP"},
+    {genres:["K-POP","アイドルポップ","EDM・ダンス"],image:"中毒性の高いアイドルソング"},
+    {genres:["J-POP","R&B・ネオソウル","ローファイ"],image:"感情的で都会的なポップス"},
+    {genres:["シティポップ","R&B・ネオソウル","ジャズポップ"],image:"夜景とドライブの世界観"},
   ]},
-  {cat:"R&B・ソウル系ミックス",items:[
-    {main:"R&B・ネオソウル",sub:"バラード",image:"ソウルバラード"},
-    {main:"R&B・ネオソウル",sub:"ヒップホップ",image:"ネオソウルヒップホップ"},
-    {main:"R&B・ネオソウル",sub:"ジャズポップ",image:"ジャジーR&B"},
-    {main:"ローファイ",sub:"アコースティック",image:"チルフォーク"},
-    {main:"ローファイ",sub:"ジャズポップ",image:"カフェジャズ・チル"},
-    {main:"ローファイ",sub:"ボサノバ",image:"ボサノバチル"},
+  {cat:"💔 エモ・切ない",items:[
+    {genres:["エモロック","ピアノバラード","バラード"],image:"涙を誘う青春ソング"},
+    {genres:["J-POP","ローファイ","バラード"],image:"夜更けの失恋ソング"},
+    {genres:["エモロック","オルタナティブロック","バラード"],image:"内面的で切ない世界観"},
+    {genres:["インディーポップ","アコースティック","ローファイ"],image:"静かな孤独感"},
+    {genres:["ボカロ","エモロック","ピアノバラード"],image:"電子的で儚い感情表現"},
+    {genres:["フォークポップ","ローファイ","バラード"],image:"深夜の詩的な失恋ソング"},
   ]},
-  {cat:"ロック系ミックス",items:[
-    {main:"ロック",sub:"J-POP",image:"バンド系ポップロック"},
-    {main:"ロック",sub:"メタル・ハードロック",image:"ヘヴィロック"},
-    {main:"ロック",sub:"アコースティック",image:"アンプラグド・生音ロック"},
-    {main:"ヴィジュアル系",sub:"バラード",image:"ドラマティックV系バラード"},
-    {main:"ヴィジュアル系",sub:"メタル・ハードロック",image:"ダークヘヴィV系"},
-    {main:"オルタナティブロック",sub:"ローファイ",image:"インディーグランジ系"},
-    {main:"オルタナティブロック",sub:"インディーポップ",image:"ドリーミーオルタナ"},
-    {main:"インディーポップ",sub:"アコースティック",image:"フォークインディー"},
-    {main:"インディーポップ",sub:"J-POP",image:"おしゃれキャッチーポップ"},
-    {main:"ポップパンク",sub:"J-POP",image:"日本語ポップパンク"},
-    {main:"ポップパンク",sub:"アニソン",image:"アニメ系ポップパンク"},
+  {cat:"🎸 ロック・バンド",items:[
+    {genres:["ロック","オルタナティブロック","エモロック"],image:"現代ロック"},
+    {genres:["ヴィジュアル系","メタル・ハードロック","バラード"],image:"激しく切ない世界観"},
+    {genres:["パンク・メロコア","ポップパンク","エモロック"],image:"日本メロコア"},
+    {genres:["ロック","メタル・ハードロック","バラード"],image:"壮大なロックバラード"},
+    {genres:["ヴィジュアル系","エモロック","ピアノバラード"],image:"儚い現代V系"},
+    {genres:["オルタナティブロック","ローファイ","バラード"],image:"退廃的な雰囲気"},
   ]},
-  {cat:"バラード・アコースティック系ミックス",items:[
-    {main:"バラード",sub:"アコースティック",image:"弾き語り系バラード"},
-    {main:"バラード",sub:"ジャズポップ",image:"ジャズバラード"},
-    {main:"バラード",sub:"R&B・ネオソウル",image:"R&Bバラード"},
-    {main:"ジャズポップ",sub:"ボサノバ",image:"ボサノバジャズ"},
-    {main:"ジャズポップ",sub:"アコースティック",image:"アコースティックジャズ"},
-    {main:"ボサノバ",sub:"アコースティック",image:"ナチュラルボサノバ"},
-    {main:"アコースティック",sub:"レゲエ",image:"アコースティックレゲエ"},
+  {cat:"🇰🇷 K-POP・アイドル",items:[
+    {genres:["K-POP","ヒップホップ","トラップ"],image:"力強い韓国ラップポップ"},
+    {genres:["K-POP","Future Bass","EDM・ダンス"],image:"未来的K-POPサウンド"},
+    {genres:["アイドルポップ","K-POP","ユーロビート"],image:"懐かしさのある現代アイドル"},
+    {genres:["K-POP","R&B・ネオソウル","ローファイ"],image:"感情的なK-POPバラード"},
+    {genres:["アイドルポップ","J-POP","EDM・ダンス"],image:"キラキラJ-POPアイドル"},
   ]},
-  {cat:"ヒップホップ・クラブ系ミックス",items:[
-    {main:"ヒップホップ",sub:"R&B・ネオソウル",image:"R&Bラップ"},
-    {main:"ヒップホップ",sub:"ローファイ",image:"チルヒップホップ"},
-    {main:"ヒップホップ",sub:"ジャズポップ",image:"ジャジーヒップホップ"},
-    {main:"EDM・ダンス",sub:"K-POP",image:"K-POPクラブ系"},
-    {main:"EDM・ダンス",sub:"ヒップホップ",image:"クラブヒップホップ"},
-    {main:"クラブアンセム",sub:"EDM・ダンス",image:"フルクラブサウンド"},
-    {main:"クラブアンセム",sub:"K-POP",image:"K-POPアンセム"},
+  {cat:"🌙 シティポップ・夜",items:[
+    {genres:["ネオシティポップ","R&B・ネオソウル","ローファイ"],image:"深夜の都会"},
+    {genres:["シティポップ","ジャズポップ","ボサノバ"],image:"昭和モダン・洗練系"},
+    {genres:["ネオシティポップ","Future Bass","R&B・ネオソウル"],image:"未来的シティポップ"},
+    {genres:["シティポップ","アーバンポップ","R&B・ネオソウル"],image:"大人の夜景ソング"},
+    {genres:["ネオシティポップ","ヒップホップ","ローファイ"],image:"現代的で都会的なサウンド"},
   ]},
-  {cat:"和系ミックス",items:[
-    {main:"演歌",sub:"バラード",image:"現代演歌バラード"},
-    {main:"演歌",sub:"ジャズポップ",image:"和ジャズ"},
-    {main:"和風・和楽器",sub:"ロック",image:"和ロック"},
-    {main:"和風・和楽器",sub:"EDM・ダンス",image:"和風EDM"},
-    {main:"和風・和楽器",sub:"アニソン",image:"和風アニソン"},
-    {main:"和風・和楽器",sub:"ヒップホップ",image:"和風ヒップホップ"},
-    {main:"和風・和楽器",sub:"ボサノバ",image:"和とボサノバの融合"},
+  {cat:"☀️ 夏・爽やか",items:[
+    {genres:["レゲエ","アコースティック","J-POP"],image:"夏フェス系"},
+    {genres:["ラテン","EDM・ダンス","アイドルポップ"],image:"キラキラサマーポップ"},
+    {genres:["シティポップ","ボサノバ","アコースティック"],image:"海辺のサマーソング"},
+    {genres:["Future Bass","EDM・ダンス","アイドルポップ"],image:"爽快なサマーアンセム"},
+    {genres:["レゲエ","R&B・ネオソウル","シティポップ"],image:"大人の夏"},
+    {genres:["ラテン","アフロビート","EDM・ダンス"],image:"フェス向けワールドサウンド"},
   ]},
-  {cat:"レゲエ系ミックス",items:[
-    {main:"レゲエ",sub:"アコースティック",image:"アコースティックレゲエ"},
-    {main:"レゲエ",sub:"R&B・ネオソウル",image:"R&Bレゲエ"},
-    {main:"レゲエ",sub:"J-POP",image:"J-レゲエ・夏系ポップ"},
-    {main:"レゲエ",sub:"ローファイ",image:"チルレゲエ"},
+  {cat:"🌑 ダーク・病み",items:[
+    {genres:["ヴィジュアル系","トラップ","EDM・ダンス"],image:"ダークモダンサウンド"},
+    {genres:["オルタナティブロック","トラップ","ローファイ"],image:"病み系サウンド"},
+    {genres:["ヒップホップ","トラップ","メタル・ハードロック"],image:"攻撃的なミクスチャー"},
+    {genres:["R&B・ネオソウル","トラップ","ローファイ"],image:"深夜の孤独感"},
+    {genres:["ボカロ","ダークエレクトロ","トラップ"],image:"電子的な絶望感"},
+    {genres:["メタル・ハードロック","EDM・ダンス","トラップ"],image:"重厚で近未来的"},
+  ]},
+  {cat:"🎵 バラード・アコースティック",items:[
+    {genres:["フォークポップ","アコースティック","バラード"],image:"詩的な弾き語りバラード"},
+    {genres:["フォークポップ","インディーポップ","ローファイ"],image:"個性的な作家性ポップ"},
+    {genres:["フォークポップ","ピアノバラード","R&B・ネオソウル"],image:"感情的なストーリーソング"},
+    {genres:["ピアノバラード","R&B・ネオソウル","バラード"],image:"感情を重視したラブソング"},
+    {genres:["バラード","アコースティック","ローファイ"],image:"静かな弾き語り"},
+    {genres:["ジャズポップ","ボサノバ","アコースティック"],image:"大人のアコースティックジャズ"},
+  ]},
+  {cat:"🎶 ヒップホップ・クラブ",items:[
+    {genres:["ヒップホップ","R&B・ネオソウル","トラップ"],image:"現代ラップ"},
+    {genres:["ヒップホップ","ローファイ","ジャズポップ"],image:"チルヒップホップ"},
+    {genres:["ヒップホップ","ゴスペル・ソウル","R&B・ネオソウル"],image:"大人のグルーヴ"},
+    {genres:["ヒップホップ","Future Bass","EDM・ダンス"],image:"フェス向けサウンド"},
+    {genres:["ユーロビート","EDM・ダンス","アイドルポップ"],image:"ノリノリパーティーソング"},
+    {genres:["クラブアンセム","Future Bass","K-POP"],image:"フロアを沸かせるアンセム"},
+  ]},
+  {cat:"🎋 和風・和系",items:[
+    {genres:["和風・和楽器","Future Bass","EDM・ダンス"],image:"和風Future Bass"},
+    {genres:["和風・和楽器","ロック","メタル・ハードロック"],image:"和風ラウドロック"},
+    {genres:["和風・和楽器","ヒップホップ","トラップ"],image:"和ラップ"},
+    {genres:["和風・和楽器","シティポップ","R&B・ネオソウル"],image:"和モダンポップ"},
+    {genres:["演歌","ピアノバラード","R&B・ネオソウル"],image:"現代演歌バラード"},
+    {genres:["和風・和楽器","ボサノバ","アコースティック"],image:"和とボサノバの融合"},
+  ]},
+  {cat:"📻 懐かしさ・レトロ",items:[
+    {genres:["昭和歌謡","R&B・ネオソウル","EDM・ダンス"],image:"レトロポップ"},
+    {genres:["昭和歌謡","シティポップ","ジャズポップ"],image:"現代歌謡"},
+    {genres:["昭和歌謡","アイドルポップ","ユーロビート"],image:"昭和×現代アイドル"},
+    {genres:["昭和歌謡","ピアノバラード","バラード"],image:"王道歌謡バラード"},
+    {genres:["昭和歌謡","ローファイ","アコースティック"],image:"ノスタルジックサウンド"},
+    {genres:["ボカロ","昭和歌謡","シティポップ"],image:"懐かしさのある電子ポップ"},
   ]},
 ];
 
@@ -352,6 +389,10 @@ const DEFAULT_PARTS:Part[]=[
   {id:"last",name:"Last Chorus（大サビ）",tag:"[Last Chorus]",enabled:true},
   {id:"outro",name:"Outro（アウトロ）",tag:"[Outro]",enabled:true},
 ];
+
+const SOLO_TYPE_OPTS=["ギター","ピアノ","サックス","バイオリン","シンセ","和楽器","AIにおまかせ"];
+const SOLO_TYPE_KW=["guitar solo","piano solo","saxophone solo","violin solo","synth solo","traditional japanese instrument solo","instrumental solo"];
+const SOLO_POS_OPTS=["Bridge前","大サビ前","AIにおまかせ"];
 
 const EXTRA_KW:{[cat:string]:{en:string;ja:string}[]}={
   "EMOTION":[
@@ -437,6 +478,9 @@ export default function App(){
   const[targetGender,setTargetGender]=useState<number|null>(null);
   const[metaphor,setMetaphor]=useState(0);
   const[dual,setDual]=useState(0);
+  const[soloEnabled,setSoloEnabled]=useState(false);   // ソロON/OFF
+  const[soloPosition,setSoloPosition]=useState(2);      // 0:Bridge前 1:大サビ前 2:AIにおまかせ
+  const[soloType,setSoloType]=useState<number[]>([]);   // ソロ楽器種類
   const[structMode,setStructMode]=useState("basic");
   const[parts,setParts]=useState<Part[]>(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
   const[pkey,setPkey]=useState("");
@@ -588,6 +632,7 @@ export default function App(){
     setF(initF);setEndings([]);setGenreMode("auto");setSelectedGenres([]);setCustomGenreName("");setCustomGenreKw("");setCustomGenreStyle("");
     setVocalGender(0);setLangRatio(6);setShowAdv(false);setVocalTexture(null);setVocalRange(null);setVocalOrigin(null);
     setChordProg(null);setBpm(null);setTargetAges([]);setTargetGender(null);setMetaphor(0);setDual(0);
+    setSoloEnabled(false);setSoloPosition(2);setSoloType([]);
     setStructMode("basic");setParts(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
     setConfirmedLocked(false);setTitleLocked(false);setLyricLocked(false);setPromptLocked(false);setWorldLocked(false);
     setOwnLyric("");setOriginalLyric("");setOwnLyricChanged(false);
@@ -630,7 +675,13 @@ export default function App(){
     if(targetAges.length>0)s+="ターゲット年齢："+targetAges.map(function(i){return AGE_OPTS[i];}).join("・")+"\n";
     if(targetGender!==null)s+="ターゲット性別："+TARGET_GENDER_OPTS[targetGender]+"\n";
     if(metaphor>0)s+="比喩レベル："+METAPHOR_OPTS[metaphor]+"\n";
-    if(dual>0)s+="二重構造：ON\n";return s;
+    if(dual>0)s+="二重構造：ON\n";
+    if(soloEnabled){
+      const posLabels=["Bridge前","大サビ前","AIにおまかせ"];
+      s+="インストゥルメンタルソロ：ON（挿入位置："+posLabels[soloPosition]+"）\n";
+      if(soloType.length>0)s+="ソロ楽器："+soloType.map(function(i){return SOLO_TYPE_OPTS[i];}).join("・")+"\n";
+    }
+    return s;
   }
 
   function buildPromptKw(){
@@ -644,6 +695,10 @@ export default function App(){
     if(chordProg!==null)kws.push(CHORD_KW[chordProg]);
     if(bpm!==null)kws.push(BPM_KW[bpm]);
     if(isChorusFirst())kws.push("chorus first");
+    if(soloEnabled){
+      const typeKws=soloType.length>0?soloType.map(function(i){return SOLO_TYPE_KW[i];}).join(", "):"instrumental solo break";
+      kws.push(typeKws);
+    }
     if(selKw.length>0)kws.push(selKw.join(", "));
     if(extraKw.trim())kws.push(extraKw.trim());
     return kws.join(", ");
@@ -661,7 +716,12 @@ export default function App(){
     }
     const q12line=F.q12.trim()?"・「"+F.q12.trim()+"」を必ずサビ（Chorus）の中心フレーズとして反映する":"";
     const q04line=F.q04.trim()?"・「"+F.q04.trim()+"」の場面を具体的なシーンや情景として歌詞に使う":"";
-    return"あなたはプロの作詞家です。\n"+genreInstr+"\n\n絶対ルール：\n・指定ジャンルらしい言葉選びをする\n・説明しすぎない・余白を残す\n・感情は直接書かず情景・行動・感覚で表現する\n・"+mInstr+"\n・同じパートは行数と音数を揃える（音数はひらがなで数える）\n・伏線と回収を設計する\n・感情の流れ（始まり→変化→結末）を構成全体に反映する\n・一人称（僕・俺・わたし・あたし等）と二人称（君・あなた・お前等）は歌詞全体で統一する。最初に登場した表現を使い続け途中で変えない（素材に複数視点が明記されている場合はその限りではない）\n・以下の構成タグをこの順番で必ず使用する："+ep.join(" → ")+"\n・構成タグを追加しない・削除しない・変更しない\n・OFFのパートは絶対に出力しない\n・順番を変更しない\n・必ず"+firstTag+"から開始する\n・言語："+getLangInstr()+(q12line?"\n"+q12line:"")+(q04line?"\n"+q04line:"")+"\n・外国語（韓国語・英語など）に括弧で翻訳注釈を絶対に付けない\n・歌詞中の言語はそのまま出力する\n・前置き・説明・コメントは一切出力禁止\n・歌詞のみを出力する";
+    const soloInstr=soloEnabled?(()=>{
+      const posLabels=["[Bridge]の直前","[Last Chorus]の直前","最も効果的な位置（AIが判断）"];
+      const typeLabel=soloType.length>0?soloType.map(function(i){return SOLO_TYPE_OPTS[i];}).join("・")+"ソロ":"インストゥルメンタルソロ";
+      return "\n・"+typeLabel+"のタグを"+posLabels[soloPosition]+"に挿入する（例：[Guitar Solo]、[Instrumental]など）";
+    })():"";
+    return"あなたはプロの作詞家です。\n"+genreInstr+"\n\n絶対ルール：\n・指定ジャンルらしい言葉選びをする\n・説明しすぎない・余白を残す\n・感情は直接書かず情景・行動・感覚で表現する\n・"+mInstr+"\n・同じパートは行数と音数を揃える（音数はひらがなで数える）\n・伏線と回収を設計する\n・感情の流れ（始まり→変化→結末）を構成全体に反映する\n・一人称（僕・俺・わたし・あたし等）と二人称（君・あなた・お前等）は歌詞全体で統一する。最初に登場した表現を使い続け途中で変えない（素材に複数視点が明記されている場合はその限りではない）"+soloInstr+"\n・以下の構成タグをこの順番で必ず使用する："+ep.join(" → ")+"\n・構成タグを追加しない・削除しない・変更しない\n・OFFのパートは絶対に出力しない\n・順番を変更しない\n・必ず"+firstTag+"から開始する\n・言語："+getLangInstr()+(q12line?"\n"+q12line:"")+(q04line?"\n"+q04line:"")+"\n・外国語（韓国語・英語など）に括弧で翻訳注釈を絶対に付けない\n・歌詞中の言語はそのまま出力する\n・前置き・説明・コメントは一切出力禁止\n・歌詞のみを出力する";
   }
 
   function buildChatSys(){
@@ -890,7 +950,7 @@ export default function App(){
   }
 
   function handleLyricEditKey(e:React.KeyboardEvent<HTMLTextAreaElement>){
-    if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendLyricEditChat();}
+    if(e.key==="Enter"&&e.shiftKey){e.preventDefault();sendLyricEditChat();}
   }
 
   async function doTitle(){
@@ -1080,7 +1140,23 @@ export default function App(){
     const nd=supportChatDisplay.concat([{role:"user",content:userMsg}]);
     setSupportChatDisplay(nd.concat([{role:"assistant",content:"回答中..."}]));
     setLoading("supportChat");
-    const sys=`あなたはMY LYRICの専門サポートAIです。以下のことのみ対応してください。
+    const sys=`あなたはMY LYRICの専門サポートAIです。MY LYRICのタブ構成と機能を正確に把握した上で回答してください。
+
+【MY LYRICのタブ構成】
+・CREATEタブ：素材入力（Q01〜Q12・ENDING）とSETTINGS（ジャンル・ボーカル・言語・詳細設定）を行う場所。ここで全ての入力をする。
+・GENERATEタブ：STEP0〜7を順番に実行する場所。テーマ確認・歌詞生成・診断・タイトル・ひらがな整形・プロンプト生成・世界観カードを全てここで行う。
+・KEYWORDSタブ：プロンプトのQuickFix調整と追加キーワードの設定。GENERATEタブでプロンプト生成後に使う。
+・REVISEタブ：歌詞修正の伝え方の例を見る場所。実際の修正はGENERATEタブのSTEP2の歌詞編集AIチャットで行う。
+・MIXタブ：ジャンルミックスの組み合わせ例（64パターン・11カテゴリ）を確認する場所。世界観・気分別に分類されている。
+・GUIDEタブ：このAIサポートチャットと使い方ガイドがある場所。
+
+【重要】
+・ジャンル選択はCREATEタブのSETTINGSで行う。GENERATEタブではない。
+・Q01〜Q12の入力はCREATEタブで行う。GENERATEタブではない。
+・歌詞生成・プロンプト生成はGENERATEタブで行う。
+・歌詞の修正・編集はGENERATEタブのSTEP2の歌詞編集AIチャットで行う。
+
+以下のことのみ対応してください。
 ・MY LYRICの使い方・操作方法の案内
 ・ジャンル選択・ミックスの相談
 ・歌詞制作のアドバイス
@@ -1090,14 +1166,20 @@ export default function App(){
 
 以下には対応しません。
 ・MY LYRIC以外の話題
-・歌詞の丸投げ生成（GENERATEタブを使うよう案内する）
+・歌詞の丸投げ生成（GENERATEタブのSTEP1で生成するよう案内する）
 ・個人的な悩み相談
 
-対応外の質問には「MY LYRICに関するご質問にお答えしています。GENERATEタブから歌詞を生成してみてください。」と答えてください。
-回答は簡潔で親切に。日本語で回答する。`;
+対応外の質問には「MY LYRICに関するご質問にお答えしています。歌詞の生成はGENERATEタブのSTEP1から行えます。」と答えてください。
+回答は簡潔で親切に。日本語で回答する。絵文字は控えめに。`;
+    // 会話履歴を最大5往復（10メッセージ）保持して渡す
+    const historyMsgs = supportChatDisplay
+      .filter(function(m){return m.content!=="回答中...";})
+      .slice(-10)
+      .map(function(m){return {role:m.role as "user"|"assistant",content:m.content};});
+    const msgs=[...historyMsgs,{role:"user" as const,content:userMsg}];
     try{
       let r="";
-      await callAI(sys,[{role:"user",content:userMsg}],function(res){r=res;setSupportChatDisplay(nd.concat([{role:"assistant",content:res}]));},1000);
+      await callAI(sys,msgs,function(res){r=res;setSupportChatDisplay(nd.concat([{role:"assistant",content:res}]));},1500);
       setSupportChatDisplay(nd.concat([{role:"assistant",content:r}]));
     }catch(e){setSupportChatDisplay(nd.concat([{role:"assistant",content:"エラーが発生しました。もう一度お試しください。"}]));}
     setLoading("");
@@ -1370,11 +1452,18 @@ export default function App(){
                             {selectedGenres.map(function(id,i){
                               const g=GENRES.find(function(x){return x.id===id;}) as Genre|undefined;
                               return (
-                                <div key={id} className="t-part-item">
-                                  <span className="t-part-name">{i===0?"★主 ":"　従 "}{g?g.name:id}</span>
-                                  <button className="t-part-arrow" onClick={function(){moveGenre(i,-1);}} disabled={i===0}>↑</button>
-                                  <button className="t-part-arrow" onClick={function(){moveGenre(i,1);}} disabled={i===selectedGenres.length-1}>↓</button>
-                                  <button className="t-part-toggle off" onClick={function(){toggleGenre(id);}}>外す</button>
+                                <div key={id}>
+                                  <div className="t-part-item">
+                                    <span className="t-part-name">{i===0?"★主 ":"　従 "}{g?g.name:id}</span>
+                                    <button className="t-part-arrow" onClick={function(){moveGenre(i,-1);}} disabled={i===0}>↑</button>
+                                    <button className="t-part-arrow" onClick={function(){moveGenre(i,1);}} disabled={i===selectedGenres.length-1}>↓</button>
+                                    <button className="t-part-toggle off" onClick={function(){toggleGenre(id);}}>外す</button>
+                                  </div>
+                                  {g&&g.ja_desc&&(
+                                    <div style={{fontSize:"10px",color:"var(--txm)",padding:"6px 12px 8px",background:"var(--gd)",borderRadius:"0 0 8px 8px",border:"1px solid rgba(200,80,192,.12)",borderTop:"none",lineHeight:"1.7",marginBottom:"4px"}}>
+                                      {g.ja_desc}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
@@ -1457,6 +1546,38 @@ export default function App(){
                       <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">ターゲット年齢層</div><Badge type="opt"/></div><div className="t-chips">{AGE_OPTS.map(function(a,i){return <div key={i} className={"t-chip"+(targetAges.includes(i)?" on":"")} onClick={function(){togAge(i);}}><div className="t-dot"></div>{a}</div>;})}</div></div>
                       <div className="t-div"></div>
                       <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">ターゲット性別</div><Badge type="opt"/></div><NullSeg opts={TARGET_GENDER_OPTS} val={targetGender} onChange={nullTog(targetGender,setTargetGender)}/></div>
+                      <div className="t-div"></div>
+                      <div className="t-q">
+                        <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">インストゥルメンタルソロ</div><Badge type="opt"/></div>
+                        <div className="t-badge-note">ギターソロ・ピアノソロなどの楽器ソロパートを歌詞構成とプロンプトに追加する。</div>
+                        <div className="t-seg" style={{marginBottom:"8px"}}>
+                          <div className={"t-seg-o"+(!soloEnabled?" on":"")} onClick={function(){setSoloEnabled(false);}}>OFF</div>
+                          <div className={"t-seg-o"+(soloEnabled?" on":"")} onClick={function(){setSoloEnabled(true);}}>ON</div>
+                        </div>
+                        {soloEnabled&&(
+                          <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+                            <div>
+                              <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>挿入位置</div>
+                              <div className="t-seg">
+                                {SOLO_POS_OPTS.map(function(opt,i){return(
+                                  <div key={i} className={"t-seg-o"+(soloPosition===i?" on":"")} onClick={function(){setSoloPosition(i);}}>{opt}</div>
+                                );})}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>楽器の種類（任意・複数選択可）</div>
+                              <div className="t-chips">
+                                {SOLO_TYPE_OPTS.map(function(opt,i){return(
+                                  <div key={i} className={"t-chip"+(soloType.includes(i)?" on":"")} onClick={function(){setSoloType(function(prev){return prev.includes(i)?prev.filter(function(x){return x!==i;}):prev.concat([i]);});}}>
+                                    <div className="t-dot"></div>{opt}
+                                  </div>
+                                );})}
+                              </div>
+                              <div style={{fontSize:"10px",color:"var(--txd)",marginTop:"6px"}}>未選択の場合はジャンルに合わせてAIが最適なソロを判断します。</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <div className="t-div"></div>
                       <div className="t-q"><div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">比喩・匂わせのレベル</div><Badge type="opt"/></div><Seg opts={METAPHOR_OPTS} val={metaphor} onChange={function(i:number){setMetaphor(i);}}/></div>
                       <div className="t-div"></div>
@@ -1638,7 +1759,7 @@ export default function App(){
                           );})}
                         </div>
                         <div className="t-chat-in">
-                          <textarea rows={2} placeholder="修正指示を入力（Enterで送信）" value={chatEditInput} onChange={function(e){setChatEditInput(e.target.value);}} onKeyDown={handleLyricEditKey}/>
+                          <textarea rows={2} placeholder="修正指示を入力（Shift+Enterで送信・Enterで改行）" value={chatEditInput} onChange={function(e){setChatEditInput(e.target.value);}} onKeyDown={handleLyricEditKey}/>
                           <button className="t-chat-send" onClick={sendLyricEditChat} disabled={loading==="lyricEdit"||!chatEditInput.trim()}>SEND</button>
                         </div>
                       </div>
@@ -1932,12 +2053,13 @@ export default function App(){
                   <div className="t-sh"><span className="t-sn">MIX</span><span className="t-st">{cat.cat}</span></div>
                   <div className="t-sb" style={{padding:"12px 16px"}}>
                     <div className="t-mix-head">
-                      <span>主ジャンル</span><span>従ジャンル</span><span>イメージ</span>
+                      <span>主ジャンル</span><span>従ジャンル①</span><span>従ジャンル②</span><span>イメージ</span>
                     </div>
                     {cat.items.map(function(item,i){return(
                       <div key={i} className="t-mix-row">
-                        <span style={{color:"var(--g)",fontFamily:"'Space Grotesk',sans-serif",fontSize:"10px"}}>{item.main}</span>
-                        <span>{item.sub}</span>
+                        <span style={{color:"var(--g)",fontFamily:"'Space Grotesk',sans-serif",fontSize:"10px"}}>{item.genres[0]}</span>
+                        <span>{item.genres[1]||"—"}</span>
+                        <span style={{color:"var(--txd)"}}>{item.genres[2]||"—"}</span>
                         <span style={{color:"var(--txd)",fontSize:"10px"}}>{item.image}</span>
                       </div>
                     );})}
@@ -1994,15 +2116,17 @@ export default function App(){
                     {h:"STEP1（歌詞生成）について",t:"Q01が入力されていればGENERATE LYRICが押せます。\nSTEP0のテーマ確認は精度を上げるための任意ステップです。\n\n既存の歌詞欄に歌詞が入力されている場合はGENERATE LYRICは使用できません（既存歌詞を使用中）。"},
                     {h:"一人称・二人称の統一について",t:"歌詞生成時、一人称（僕・俺・わたし等）と二人称（君・あなた等）は歌詞全体で統一されます。最初に登場した表現で最後まで統一します。\n\nただしQ01〜Q12の素材に複数の視点や一人称が明記されている場合は、その内容を優先します。"},
                     {h:"STEP2（歌詞チェック・編集）について",t:"歌詞チェックは最大2回まで実行できます。\n\n🚨 致命的な問題（構成崩壊・テーマ不一致など）→「AIが自動修正する」で修正\n⚠ 軽微な問題（表現・ジャンルらしさなど）→ 歌詞編集AIチャットで調整\n\n歌詞が変更された場合はSTEP2の再チェックが可能です。"},
-                    {h:"歌詞編集AIチャットについて",t:"STEP2にある歌詞のブラッシュアップ専用チャットです。\n\nクイック修正ボタンで入力を補助（自動送信しない）。\n送信するとAIが修正案と修正済み歌詞全文を返します。\n各返答の「歌詞へ反映する」で歌詞データに適用（✅反映済みに変わる）。\n「変更前に戻す」でその返答の反映を取り消せる（反映済みの場合のみ表示）。\n「この編集をリセット」でその返答とユーザーの指示を削除（反映済みなら歌詞も戻す）。\n「オールリセット」でチャット全消去＋最初に生成した歌詞の状態に戻す。"},
+                    {h:"歌詞編集AIチャットについて",t:"STEP2にある歌詞のブラッシュアップ専用チャットです。\n\nクイック修正ボタンで入力を補助（自動送信しない）。\nEnterキーで改行、Shift+Enterで送信（またはSENDボタン）。\n送信するとAIが修正案と修正済み歌詞全文を返します。\n各返答の「歌詞へ反映する」で歌詞データに適用（✅反映済みに変わる）。\n「変更前に戻す」でその返答の反映を取り消せる（反映済みの場合のみ表示）。\n「この編集をリセット」でその返答とユーザーの指示を削除（反映済みなら歌詞も戻す）。\n「オールリセット」でチャット全消去＋最初に生成した歌詞の状態に戻す。"},
+                    {h:"AIサポートチャットについて",t:"GUIDEタブの先頭にあるMY LYRIC専用のサポートチャットです。画面右下の💬ボタンからいつでもアクセスできます。\n\n対応内容：\n・MY LYRICの使い方・操作方法\n・ジャンル選択・ミックスの相談\n・歌詞制作のアドバイス\n・Q01〜Q12の入力サポート\n・プロンプト改善の相談\n\n会話は連続した文脈を保持します（最大5往復）。「チャットをリセット」で会話履歴を消去できます。\nMY LYRIC以外の話題・歌詞の丸投げ生成には対応していません。"},
                     {h:"STEP4（AI用ひらがな整形）について",t:"日本語をひらがな化し、意味のまとまりごとに全角スペースを入れて息継ぎ・リズムが分かる形に整形します。SunoやUdioでの読み間違いを防ぎます。\n\n歌詞が変更された場合は⚠ 警告が表示されます。その場合は再整形してください。"},
                     {h:"音楽生成AIとプロンプト文字数",t:"STEP5で使用する音楽生成AIと文字数上限を選択できます。\nSuno無料：200〜300文字推奨\nSuno有料（v5）：最大1,000文字\nUdio：文字数制限なし（詳細ほど高品質）"},
                     {h:"プロンプト生成の条件",t:"プロンプト生成は歌詞がある場合のみ使用できます。\n・STEP1で歌詞を生成した場合\n・STEP1の既存の歌詞欄に歌詞を入力した場合\n\nSTEP5のGENERATE PROMPTはSTEP1の歌詞生成とは独立しています。"},
                     {h:"STEP6（プロンプト最終チェック）について",t:"プロンプトの診断は最大2回まで実行できます。\n\n🚨 致命的な問題（文字数超過・キーワード欠如など）→「AIが自動修正する」で修正\n⚠ 軽微な問題（キーワード順序など）→ KEYWORDSタブで調整\n\nKEYWORDS（QUICK FIX・追加キーワード）による調整後はSTEP6の再診断をおすすめします。"},
                     {h:"KEYWORDSタブのQUICK FIXについて",t:"QUICK FIXとEXTRA KEYWORDSは完全独立しています。\n\nQUICK FIX：ボタンを選択して「プロンプトに反映させる」を押すと反映。文字数は自動で上限内に収めます。\nEXTRA KEYWORDS：キーワードを選択または入力して「プロンプトに反映させる」を押すと反映。\n\n「初期プロンプトに戻す」でGENERATE PROMPT直後の状態に戻せます（何度反映しても初期状態に一発で戻ります）。"},
                     {h:"REVISEタブについて",t:"REVISEは歌詞修正の「伝え方の例」を見る場所です。実際の修正はGENERATEタブのSTEP2にある歌詞編集AIチャットで行います。"},
-                    {h:"MIXタブについて",t:"MIXタブではジャンルミックスの組み合わせ例（54パターン）を確認できます。\nCREATEのSETTINGSでジャンルを最大3つ選ぶと主従で掛け合わせて生成されます。\n\n選んだ順番が主従に影響します（1つ目が主・2つ目以降が従）。"},
-                    {h:"ジャンルの決め方",t:"3つのモードがあります。\n①AIにおまかせ：素材から最適なジャンルをAIが判断\n②選んで決める：最大3つ選択可。選んだ順に主従が決まり掛け合わせて生成。系統別に24ジャンルから選択\n③カスタム入力：ジャンル名とキーワードを自由に指定"},
+                    {h:"MIXタブについて",t:"MIXタブではジャンルミックスの組み合わせ例（64パターン）を確認できます。\nCREATEのSETTINGSでジャンルを最大3つ選ぶと主従で掛け合わせて生成されます。\n\n選んだ順番が主従に影響します（1つ目が主・2つ目以降が従）。\n\nMIXタブは「人気・鉄板」「エモ・切ない」「ロック・バンド」「K-POP・アイドル」「シティポップ・夜」「夏・爽やか」「ダーク・病み」「バラード・アコースティック」「ヒップホップ・クラブ」「和風・和系」「懐かしさ・レトロ」の11カテゴリに分類されています。"},
+                    {h:"ジャンルの決め方",t:"3つのモードがあります。\n①AIにおまかせ：素材から最適なジャンルをAIが判断\n②選んで決める：最大3つ選択可。選んだ順に主従が決まり掛け合わせて生成。系統別に38ジャンルから選択。選択するとそのジャンルの説明が表示されます\n③カスタム入力：ジャンル名とキーワードを自由に指定"},
+                    {h:"インストゥルメンタルソロ設定について",t:"CREATEタブの詳細設定（「詳細設定を開く」）に追加されています。\n\nONにすると歌詞構成にソロパートタグ（例：[Guitar Solo]）が自動挿入され、プロンプトにも対応するキーワードが追加されます。\n\n設定項目：\n・ON/OFF切り替え\n・挿入位置：Bridge前 / 大サビ前 / AIにおまかせ\n・楽器の種類：ギター・ピアノ・サックス・バイオリン・シンセ・和楽器・AIにおまかせ（複数選択可）\n\n楽器を選択しない場合はジャンルに合わせてAIが最適なソロを判断します。"},
                     {h:"制作フロー",t:"【通常ルート】\nSTEP 0: テーマ確認（任意・精度向上）\nSTEP 1: 歌詞を生成（Q01があればすぐ押せる）\nSTEP 2: 歌詞チェック＋歌詞編集AIチャット\nSTEP 3〜7: タイトル・AI用ひらがな整形・プロンプト・プロンプトチェック・世界観カード\n\n【既存歌詞ルート】\nSTEP 1: 既存の歌詞を入力\nSTEP 0: テーマ逆算（任意・精度向上）\nSTEP 2〜7: そのまま利用可能\n\n制作前の確認：\n・テーマの核心を一言で言えるか\n・登場人物の関係性は明確か\n・感情の流れに起承転結があるか\n・終わり方は決まってるか\n・ターゲットリスナーは誰か\n\n制作後の確認：\n・同じパートの行数は揃ってるか\n・ひらがなの音数は揃ってるか\n・伏線と回収は成立してるか\n・比喩が多すぎないか\n・選択したジャンルらしいか\n・プロンプトが文字数上限以内に収まってるか"},
                     {h:"プロジェクトの保存について",t:"プロジェクト名を決めてSAVEするとこの端末のブラウザ内に保存される。別端末との共有には対応していません。\n\n保存対象：Q01〜Q12・ENDING・ジャンル設定・ボーカル設定・言語設定・構成・その他全設定・既存の歌詞"},
                   ].map(function(item,i){return (
