@@ -339,7 +339,7 @@ const MIX_EXAMPLES: MixCat[] = [
 ];
 
 const MUSIC_AI_OPTS = ["Suno","Udio","その他"];
-const CHORUS_REPEAT_OPTS = ["AIにおまかせ","コーラス全て同じ","コーラス同じ・大サビ変える","コーラス少し変化・大サビ全書換","全て異なる"];
+const CHORUS_REPEAT_OPTS = ["全て同じ","同じ・大サビ変","少し変化・大サビ全換","全て異なる"];
 const STYLE_LIMIT_OPTS = [200, 300, 500, 700, 1000];
 const TABS:{id:string;label:string}[]=[{id:"create",label:"CREATE"},{id:"generate",label:"GENERATE"},{id:"keywords",label:"KEYWORDS"},{id:"revise",label:"REVISE"},{id:"mix",label:"MIX"},{id:"guide",label:"GUIDE"}];
 const ENDINGS=["後悔","祈り","解放","曖昧","前向き","感謝","怒り","余韻"];
@@ -734,7 +734,7 @@ export default function App(){
       const cCount=ep2.filter(function(t){return t==="[Chorus]";}).length;
       const hasLast=ep2.includes("[Last Chorus]");
       if(cCount<2||!hasLast||chorusRepeat===null)return "";
-      const map=["","・[Chorus]は全て同じ歌詞にする。[Last Chorus]も同じ歌詞にする","・[Chorus]は全て同じ歌詞にする。[Last Chorus]だけ全て書き換える","・[Chorus]間で歌詞を少し変化させる（核心のフレーズは維持）。[Last Chorus]は全て書き換えてクライマックスにする","・[Chorus]・[Last Chorus]を全て異なる歌詞にする"];
+      const map=["・[Chorus]は全て同じ歌詞にする。[Last Chorus]も同じ歌詞にする","・[Chorus]は全て同じ歌詞にする。[Last Chorus]だけ全て書き換える","・[Chorus]間で歌詞を少し変化させる（核心のフレーズは維持）。[Last Chorus]は全て書き換えてクライマックスにする","・[Chorus]・[Last Chorus]を全て異なる歌詞にする"];
       return "\n"+map[chorusRepeat as number];
     })();
     return"あなたはプロの作詞家です。\n"+genreInstr+"\n\n絶対ルール：\n・指定ジャンルらしい言葉選びをする\n・説明しすぎない・余白を残す\n・感情は直接書かず情景・行動・感覚で表現する\n・"+mInstr+"\n・同じパートは行数と音数を揃える（音数はひらがなで数える）\n・伏線と回収を設計する\n・感情の流れ（始まり→変化→結末）を構成全体に反映する\n・一人称（僕・俺・わたし・あたし等）と二人称（君・あなた・お前等）は歌詞全体で統一する。最初に登場した表現を使い続け途中で変えない（素材に複数視点が明記されている場合はその限りではない）"+soloInstr+chorusInstr+"\n・以下の構成タグをこの順番で必ず使用する："+ep.join(" → ")+"\n・構成タグを追加しない・削除しない・変更しない\n・OFFのパートは絶対に出力しない\n・順番を変更しない\n・必ず"+firstTag+"から開始する\n・言語："+getLangInstr()+(q12line?"\n"+q12line:"")+(q04line?"\n"+q04line:"")+"\n・外国語（韓国語・英語など）に括弧で翻訳注釈を絶対に付けない\n・歌詞中の言語はそのまま出力する\n・前置き・説明・コメントは一切出力禁止\n・歌詞のみを出力する";
@@ -1535,10 +1535,9 @@ export default function App(){
                       const opts=fullOpts?CHORUS_REPEAT_OPTS:CHORUS_REPEAT_OPTS.slice(0,1);
                       return(
                         <div>
-                          <div className="t-seg">
+                          <div className="t-seg" style={{flexWrap:"wrap",gap:"4px"}}>
                             {opts.map(function(opt,i){
-                              const val=i+1;
-                              return <div key={i} className={"t-seg-o"+(chorusRepeat===val?" on":"")} onClick={function(){setChorusRepeat(chorusRepeat===val?null:val);}}>{opt}</div>;
+                              return <div key={i} style={{fontSize:"10px",padding:"7px 10px"}} className={"t-seg-o"+(chorusRepeat===i?" on":"")} onClick={function(){setChorusRepeat(chorusRepeat===i?null:i);}}>{opt}</div>;
                             })}
                           </div>
                           <div style={{fontSize:"10px",color:"var(--txd)",marginTop:"6px"}}>
