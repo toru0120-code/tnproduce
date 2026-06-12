@@ -340,6 +340,8 @@ const MIX_EXAMPLES: MixCat[] = [
 
 const MUSIC_AI_OPTS = ["Suno","Udio","その他"];
 const CHORUS_REPEAT_OPTS = ["全て同じ","同じ・大サビ変","少し変化・大サビ全換","全て異なる"];
+const MODULATION_POS_OPTS = ["ブリッジで変調","大サビで変調","両方"];
+const MODULATION_KW = ["key change in bridge, modulation before chorus","dramatic key change before last chorus, half step up modulation","key change in bridge and before last chorus, modulation"];
 const STYLE_LIMIT_OPTS = [200, 300, 500, 700, 1000];
 const TABS:{id:string;label:string}[]=[{id:"create",label:"CREATE"},{id:"generate",label:"GENERATE"},{id:"keywords",label:"KEYWORDS"},{id:"revise",label:"REVISE"},{id:"mix",label:"MIX"},{id:"guide",label:"GUIDE"}];
 const ENDINGS=["後悔","祈り","解放","曖昧","前向き","感謝","怒り","余韻"];
@@ -479,10 +481,12 @@ export default function App(){
   const[targetGender,setTargetGender]=useState<number|null>(null);
   const[metaphor,setMetaphor]=useState<number|null>(null);
   const[dual,setDual]=useState(0);
-  const[soloEnabled,setSoloEnabled]=useState(false);   // ソロON/OFF
+  const[soloEnabled,setSoloEnabled]=useState<boolean|null>(null); // null:未選択（AI判断）false:OFF（ソロなし指示）true:ON
   const[soloPosition,setSoloPosition]=useState<number|null>(null); // null:未選択（AI判断）0:Bridge前 1:大サビ前
   const[soloType,setSoloType]=useState<number[]>([]);   // ソロ楽器種類
   const[chorusRepeat,setChorusRepeat]=useState<number|null>(null); // null:未選択（AI判断）1:全て同じ 2:Chorus同じ・Last変える 3:Chorus変化・Last全書換 4:全て異なる
+  const[modulationMode,setModulationMode]=useState<"off"|"on"|null>(null); // null:未選択 "off":変調なし "on":変調あり
+  const[modulationPos,setModulationPos]=useState<number|null>(null); // null:未選択 0:ブリッジ 1:大サビ 2:両方
   const[structMode,setStructMode]=useState("basic");
   const[parts,setParts]=useState<Part[]>(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
   const[pkey,setPkey]=useState("");
@@ -634,7 +638,8 @@ export default function App(){
     setF(initF);setEndings([]);setGenreMode("auto");setSelectedGenres([]);setCustomGenreName("");setCustomGenreKw("");setCustomGenreStyle("");
     setVocalGender(0);setLangRatio(6);setShowAdv(false);setVocalTexture(null);setVocalRange(null);setVocalOrigin(null);
     setChordProg(null);setBpm(null);setTargetAges([]);setTargetGender(null);setMetaphor(null);setDual(0);
-    setSoloEnabled(false);setSoloPosition(null);setSoloType([]);setChorusRepeat(null);
+    setSoloEnabled(null);setSoloPosition(null);setSoloType([]);setChorusRepeat(null);
+    setModulationMode(null);setModulationPos(null);
     setStructMode("basic");setParts(DEFAULT_PARTS.map(function(p){return Object.assign({},p) as Part;}));
     setConfirmedLocked(false);setTitleLocked(false);setLyricLocked(false);setPromptLocked(false);setWorldLocked(false);
     setOwnLyric("");setOriginalLyric("");setOwnLyricChanged(false);
@@ -678,6 +683,8 @@ export default function App(){
     if(targetGender!==null)s+="ターゲット性別："+TARGET_GENDER_OPTS[targetGender]+"\n";
     if(metaphor!==null)s+="比喩レベル："+METAPHOR_OPTS[metaphor as number]+"\n";
     if(dual>0)s+="二重構造：ON\n";
+    if(modulationMode==="on"&&modulationPos!==null)s+="変調："+MODULATION_POS_OPTS[modulationPos]+"\n";
+    if(modulationMode==="off")s+="変調：なし（変調なし指示）\n";
     if(chorusRepeat!==null){
       const ep2=getEnabledParts();
       const cCount=ep2.filter(function(t){return t==="[Chorus]";}).length;
@@ -703,9 +710,16 @@ export default function App(){
     if(chordProg!==null)kws.push(CHORD_KW[chordProg]);
     if(bpm!==null)kws.push(BPM_KW[bpm]);
     if(isChorusFirst())kws.push("chorus first");
-    if(soloEnabled){
+    if(soloEnabled===true){
       const typeKws=soloType.length>0?soloType.map(function(i){return SOLO_TYPE_KW[i];}).join(", "):"instrumental solo break";
       kws.push(typeKws);
+    } else if(soloEnabled===false){
+      kws.push("no instrumental solo, no solo section, no guitar solo");
+    }
+    if(modulationMode==="on"&&modulationPos!==null){
+      kws.push(MODULATION_KW[modulationPos]);
+    } else if(modulationMode==="off"){
+      kws.push("no modulation, no key change, stay in original key throughout");
     }
     if(selKw.length>0)kws.push(selKw.join(", "));
     if(extraKw.trim())kws.push(extraKw.trim());
@@ -724,7 +738,7 @@ export default function App(){
     }
     const q12line=F.q12.trim()?"・「"+F.q12.trim()+"」を必ずサビ（Chorus）の中心フレーズとして反映する":"";
     const q04line=F.q04.trim()?"・「"+F.q04.trim()+"」の場面を具体的なシーンや情景として歌詞に使う":"";
-    const soloInstr=soloEnabled?(()=>{
+    const soloInstr=soloEnabled===true?(()=>{
       const posLabels=["[Bridge]の直前","[Last Chorus]の直前"];
       const typeLabel=soloType.length>0?soloType.map(function(i){return SOLO_TYPE_OPTS[i];}).join("・")+"ソロ":"インストゥルメンタルソロ";
       return "\n・"+typeLabel+"のタグを"+(soloPosition!==null?posLabels[soloPosition as number]:"最も効果的な位置（AIが判断）")+"に挿入する（例：[Guitar Solo]、[Instrumental]など）";
@@ -1159,11 +1173,13 @@ export default function App(){
     const sys=`あなたはMY LYRICの専門サポートAIです。MY LYRICのタブ構成と機能を正確に把握した上で回答してください。
 
 【MY LYRICのタブ構成】
-・CREATEタブ：素材入力（Q01〜Q12・ENDING）とSETTINGS（ジャンル・ボーカル・言語・コーラスの繰り返し・詳細設定）を行う場所。ここで全ての入力をする。
+・CREATEタブ：素材入力（Q01〜Q12・ENDING）とSETTINGS（ジャンル・ボーカル・言語・コーラスの繰り返し・詳細設定）を行う場所。ここで全ての入力をする。詳細設定内の変調（キーチェンジ）は未選択/OFF/ONの3状態があり、OFFはプロンプトに「変調なし」指示を追加、ONはブリッジ・大サビ・両方から選択してプロンプトに反映する。
 ・GENERATEタブ：STEP0〜7を順番に実行する場所。テーマ確認・歌詞生成・診断・タイトル・ひらがな整形・プロンプト生成・世界観カードを全てここで行う。
 ・KEYWORDSタブ：プロンプトのQuickFix調整と追加キーワードの設定。GENERATEタブでプロンプト生成後に使う。
 ・REVISEタブ：歌詞修正の伝え方の例を見る場所。実際の修正はGENERATEタブのSTEP2の歌詞編集AIチャットで行う。
 ・MIXタブ：ジャンルミックスの組み合わせ例（64パターン・11カテゴリ）を確認する場所。世界観・気分別に分類されている。
+
+【重要】音楽生成AIによってプロンプトの解釈・対応状況が異なる。変調・ソロ・BPMなどの詳細な指示は対応していないAIでは無視される場合がある。プロンプトが反映されない場合は再生成・文字数削減・ジャンルキーワードの優先を案内する。
 ・GUIDEタブ：このAIサポートチャットと使い方ガイドがある場所。
 
 【重要】
@@ -1205,7 +1221,7 @@ export default function App(){
 
   function saveProject(){
     if(!pkey.trim()){setPst("err:プロジェクト名を入力してください");return;}
-    const data=JSON.stringify({F,endings,genreMode,selectedGenres,customGenreName,customGenreKw,customGenreStyle,vocalGender,langRatio,vocalTexture,vocalRange,vocalOrigin,chordProg,bpm,targetAges,targetGender,metaphor,dual,chorusRepeat,structMode,parts,selKw,extraKw,ownLyric});
+    const data=JSON.stringify({F,endings,genreMode,selectedGenres,customGenreName,customGenreKw,customGenreStyle,vocalGender,langRatio,vocalTexture,vocalRange,vocalOrigin,chordProg,bpm,targetAges,targetGender,metaphor,dual,chorusRepeat,modulationMode,modulationPos,soloEnabled,soloPosition,soloType,structMode,parts,selKw,extraKw,ownLyric});
     try{localStorage.setItem("mylyric:"+pkey.trim(),data);setPst("ok:「"+pkey.trim()+"」を保存しました");}
     catch(e){setPst("err:保存に失敗しました");}
   }
@@ -1224,7 +1240,13 @@ export default function App(){
       if(d.vocalOrigin!==undefined)setVocalOrigin(d.vocalOrigin);if(d.chordProg!==undefined)setChordProg(d.chordProg);
       if(d.bpm!==undefined)setBpm(d.bpm);if(d.targetAges)setTargetAges(d.targetAges);
       if(d.targetGender!==undefined)setTargetGender(d.targetGender);if(d.metaphor!==undefined)setMetaphor(d.metaphor);
-      if(d.dual!==undefined)setDual(d.dual);if((d as any).chorusRepeat!==undefined)setChorusRepeat((d as any).chorusRepeat);if(d.structMode)setStructMode(d.structMode);
+      if(d.dual!==undefined)setDual(d.dual);if((d as any).chorusRepeat!==undefined)setChorusRepeat((d as any).chorusRepeat);
+      if((d as any).modulationMode!==undefined)setModulationMode((d as any).modulationMode as "off"|"on"|null);
+      if((d as any).modulationPos!==undefined)setModulationPos((d as any).modulationPos);
+      if((d as any).soloEnabled!==undefined)setSoloEnabled((d as any).soloEnabled as boolean|null);
+      if((d as any).soloPosition!==undefined)setSoloPosition((d as any).soloPosition);
+      if((d as any).soloType!==undefined)setSoloType((d as any).soloType);
+      if(d.structMode)setStructMode(d.structMode);
       if(d.parts)setParts(d.parts);if(d.selKw)setSelKw(d.selKw);if(d.extraKw)setExtraKw(d.extraKw);
       setPst("ok:「"+pkey.trim()+"」を読み込みました");
     }catch(e){setPst("err:読み込みに失敗しました");}
@@ -1591,15 +1613,18 @@ export default function App(){
                       <div className="t-div"></div>
                       <div className="t-q">
                         <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">インストゥルメンタルソロ</div><Badge type="opt"/></div>
-                        <div className="t-badge-note">ギターソロ・ピアノソロなどの楽器ソロパートを歌詞構成とプロンプトに追加する。</div>
+                        <div className="t-badge-note">ギターソロ・ピアノソロなどの楽器ソロパートを歌詞構成とプロンプトに追加する。OFFをタップすると「ソロなし」の指示がプロンプトに追加されます。</div>
+                        <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px"}}>タップで選択・もう一度タップで解除（未選択）。未選択の場合はAIが判断します。</div>
                         <div className="t-seg" style={{marginBottom:"8px"}}>
-                          <div className={"t-seg-o"+(!soloEnabled?" on":"")} onClick={function(){setSoloEnabled(false);}}>OFF</div>
-                          <div className={"t-seg-o"+(soloEnabled?" on":"")} onClick={function(){setSoloEnabled(true);}}>ON</div>
+                          <div className={"t-seg-o"+(soloEnabled===false?" on":"")} onClick={function(){setSoloEnabled(soloEnabled===false?null:false);}}>OFF</div>
+                          <div className={"t-seg-o"+(soloEnabled===true?" on":"")} onClick={function(){setSoloEnabled(soloEnabled===true?null:true);}}>ON</div>
                         </div>
-                        {soloEnabled&&(
+                        {soloEnabled===null&&<div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px"}}>未選択：AIが素材・ジャンルに合わせて判断します。</div>}
+                        {soloEnabled===false&&<div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px"}}>「ソロなし」の指示が音楽生成AIプロンプトに追加されます。</div>}
+                        {soloEnabled===true&&(
                           <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
                             <div>
-                              <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>挿入位置（未選択の場合はAIが判断）</div>
+                              <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>挿入位置（タップで選択・再タップで解除。未選択の場合はAIが判断）</div>
                               <div className="t-seg">
                                 {SOLO_POS_OPTS.map(function(opt,i){return(
                                   <div key={i} className={"t-seg-o"+(soloPosition===i?" on":"")} onClick={function(){setSoloPosition(soloPosition===i?null:i);}}>{opt}</div>
@@ -1607,7 +1632,7 @@ export default function App(){
                               </div>
                             </div>
                             <div>
-                              <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>楽器の種類（任意・複数選択可）</div>
+                              <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>楽器の種類（任意・複数選択可・タップで選択/解除）</div>
                               <div className="t-chips">
                                 {SOLO_TYPE_OPTS.map(function(opt,i){return(
                                   <div key={i} className={"t-chip"+(soloType.includes(i)?" on":"")} onClick={function(){setSoloType(function(prev){return prev.includes(i)?prev.filter(function(x){return x!==i;}):prev.concat([i]);});}}>
@@ -1617,6 +1642,30 @@ export default function App(){
                               </div>
                               <div style={{fontSize:"10px",color:"var(--txd)",marginTop:"6px"}}>未選択の場合はジャンルに合わせてAIが最適なソロを判断します。</div>
                             </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="t-div"></div>
+                      <div className="t-q">
+                        <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"2px"}}><div className="t-ql">変調（キーチェンジ）</div><Badge type="opt"/></div>
+                        <div className="t-badge-note">キーが変わるタイミングを指定します。音楽生成AIプロンプトに反映されます。</div>
+                        <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px"}}>タップで選択・もう一度タップで解除（未選択）。未選択の場合はAIが判断します。</div>
+                        <div className="t-seg" style={{marginBottom:"8px"}}>
+                          <div className={"t-seg-o"+(modulationMode==="off"?" on":"")} onClick={function(){setModulationMode(modulationMode==="off"?null:"off");setModulationPos(null);}}>OFF</div>
+                          <div className={"t-seg-o"+(modulationMode==="on"?" on":"")} onClick={function(){setModulationMode(modulationMode==="on"?null:"on");}}>ON</div>
+                        </div>
+                        {modulationMode===null&&<div style={{fontSize:"10px",color:"var(--txd)"}}>未選択：AIが判断します。</div>}
+                        {modulationMode==="off"&&<div style={{fontSize:"10px",color:"var(--txd)"}}>「変調なし」の指示が音楽生成AIプロンプトに追加されます。</div>}
+                        {modulationMode==="on"&&(
+                          <div>
+                            <div style={{fontSize:"10px",color:"var(--txd)",marginBottom:"6px",letterSpacing:".05em"}}>変調のタイミング（タップで選択・再タップで解除）</div>
+                            <div className="t-seg">
+                              {MODULATION_POS_OPTS.map(function(opt,i){return(
+                                <div key={i} className={"t-seg-o"+(modulationPos===i?" on":"")} onClick={function(){setModulationPos(modulationPos===i?null:i);}}>{opt}</div>
+                              );})}
+                            </div>
+                            {modulationPos===null&&<div style={{fontSize:"10px",color:"var(--rd)",marginTop:"4px"}}>タイミングを選択してください。</div>}
+                            <div style={{fontSize:"10px",color:"var(--txd)",marginTop:"6px"}}>※音楽生成AIによって効果の出方が異なります。プロンプトに指示として反映されますが、必ず変調が入る保証はありません。</div>
                           </div>
                         )}
                       </div>
@@ -1850,7 +1899,7 @@ export default function App(){
                       {lyricChanged&&!hira&&(
                         <div className="t-info" style={{marginBottom:"8px",borderColor:"rgba(200,80,192,.3)"}}>⚠ 歌詞が変更されました。再整形してください。</div>
                       )}
-                      <div className="t-info" style={{marginBottom:"8px"}}>日本語をひらがな化し、意味のまとまりごとに全角スペースを入れて息継ぎ・リズムが分かる形に整形します。SunoやUdioでの読み間違いを防ぎます。</div>
+                      <div className="t-info" style={{marginBottom:"8px"}}>日本語をひらがな化し、意味のまとまりごとに全角スペースを入れて息継ぎ・リズムが分かる形に整形します。音楽生成AIでの読み間違いを防ぎます。</div>
                       <button className="t-btn t-btn-g" onClick={doHira} disabled={!!loading} style={{marginBottom:"8px"}}>{loading==="hira"?"整形中...":hira?"再整形する":"AI用ひらがな整形"}</button>
                       {hira&&(
                         <div>
@@ -1883,7 +1932,7 @@ export default function App(){
                           {STYLE_LIMIT_OPTS.map(function(n){return <div key={n} className={"t-seg-o"+(styleLimit===n?" on":"")} onClick={function(){setStyleLimit(n);}}>{n}字</div>;})}
                         </div>
                         <div style={{fontSize:"10px",color:"var(--txd)",marginTop:"4px"}}>
-                          Suno無料：200〜300文字推奨　Suno有料（v5）：最大1,000文字　Udio：制限なし
+                          Suno無料：200〜300文字推奨　Suno v5：最大1,000文字　Udio：制限なし
                         </div>
                       </div>
                     )}
@@ -2152,27 +2201,35 @@ export default function App(){
                 <div className="t-sb" style={{gap:"0",padding:"8px 16px"}}>
                   {[
                     {h:"💡 歌詞の精度について",t:"MY LYRICはQ01のみでも歌詞を生成できます。\n\nQ02〜Q12の内容が増えるほど歌詞の個性や説得力は向上します。\n\n入力の優先度：\n① Q01（特別必須）→ テーマの軸\n② Q12・ENDING（必須）→ 核心と着地点\n③ 推奨項目（★） → Q02・Q04・Q06・Q08・Q09\n④ 任意項目 → Q03・Q05・Q07・Q10・Q11"},
-                    {h:"🔑 Q01（特別必須）について",t:"Q01が空欄の場合はGENERATEが動きません。10文字未満の場合は警告が表示されます。\n例：「好きだった人に振られて悔しい」\n\nテーマ確認（STEP0）を実行した後はQ01がロックされます（編集不可）。\n変更したい場合はCREATEタブ右下のRESETボタンで全てリセットしてください。"},
+                    {h:"🔑 Q01（特別必須）について",t:"Q01が空欄の場合はGENERATEが動きません。10文字未満の場合は警告が表示されます。\n例：「好きだった人に振られて悔しい」\n\n【操作方法】\nQ01のテキストエリアをタップして直接入力します。\n\nテーマ確認（STEP0）を実行した後はQ01がロックされます（編集不可）。\n変更したい場合はCREATEタブ右下のRESETボタンで全てリセットしてください。"},
                     {h:"既存の歌詞を使う場合",t:"STEP1の既存の歌詞欄に歌詞を入力すると、Q01が空でもSTEP2〜7が全て使えます。\n・歌詞診断・タイトル生成・AI用ひらがな整形・プロンプト生成・世界観カード\n\nSTEP0の「歌詞からテーマを分析する」を実行すると歌詞からテーマを逆算して確定テーマを生成します。\n\n既存の歌詞を変更した場合は⚠ 警告バナーが表示されます。その場合はSTEP0やSTEP2などを生成し直すことを推奨します。\n既存の歌詞の「リセット」ボタンを押すと歌詞・診断・チャット履歴が全てクリアされます。"},
-                    {h:"STEP0について",t:"Q01または既存歌詞があればSTEP0のテーマ確認が使えます。\nテーマ確認は任意ですが、実行すると歌詞生成・診断・編集チャットの精度が向上します。\n\nAIが質問を返した場合、回答は任意です。「修正して再確認する」で更新できます。\n\nSTEP0を実行しなくてもQ01があれば直接GENERATE LYRICが使えます。"},
+                    {h:"STEP0について",t:"Q01または既存歌詞があればSTEP0のテーマ確認が使えます。\nテーマ確認は任意ですが、実行すると歌詞生成・診断・編集チャットの精度が向上します。\n\n【操作方法】\n①「テーマを確認する」ボタンをタップして実行\n②確認結果を確認し、ズレがあればテキストエリアに修正指示を入力して再確認\n③問題なければSTEP1へ進む\n\nSTEP0を実行しなくてもQ01があれば直接GENERATE LYRICが使えます。"},
                     {h:"STEP1（歌詞生成）について",t:"Q01が入力されていればGENERATE LYRICが押せます。\nSTEP0のテーマ確認は精度を上げるための任意ステップです。\n\n既存の歌詞欄に歌詞が入力されている場合はGENERATE LYRICは使用できません（既存歌詞を使用中）。"},
                     {h:"一人称・二人称の統一について",t:"歌詞生成時、一人称（僕・俺・わたし等）と二人称（君・あなた等）は歌詞全体で統一されます。最初に登場した表現で最後まで統一します。\n\nただしQ01〜Q12の素材に複数の視点や一人称が明記されている場合は、その内容を優先します。"},
-                    {h:"STEP2（歌詞チェック・編集）について",t:"歌詞チェックは最大2回まで実行できます。\n\n🚨 致命的な問題（構成崩壊・テーマ不一致など）→「AIが自動修正する」で修正\n⚠ 軽微な問題（表現・ジャンルらしさなど）→ 歌詞編集AIチャットで調整\n\n歌詞が変更された場合はSTEP2の再チェックが可能です。"},
+                    {h:"STEP2（歌詞チェック・編集）について",t:"歌詞チェックは最大2回まで実行できます。\n\n🚨 致命的な問題（構成崩壊・テーマ不一致など）→「AIが自動修正する」で修正\n⚠ 軽微な問題（表現・ジャンルらしさなど）→ 歌詞編集AIチャットで調整\n\n歌詞が変更された場合はSTEP2の再チェックが可能です。\n\n【操作方法】\n①「歌詞最終チェック」ボタンをタップして診断実行\n②致命的な問題があれば「AI自動修正」ボタンをタップ\n③軽微な問題は下の歌詞編集AIチャットに修正指示を入力してShift+Enterで送信\n④「歌詞へ反映する」ボタンをタップして修正を適用",
                     {h:"歌詞編集AIチャットについて",t:"STEP2にある歌詞のブラッシュアップ専用チャットです。\n\nクイック修正ボタンで入力を補助（自動送信しない）。\nEnterキーで改行、Shift+Enterで送信（またはSENDボタン）。\n送信するとAIが変更理由と修正済み歌詞全文を返します。\n各返答の「歌詞へ反映する」で歌詞データに適用（✅反映済みに変わる）。\n「変更前に戻す」でその返答の反映を取り消せる（反映済みの場合のみ表示）。\n「この編集をリセット」でその返答とユーザーの指示を削除（反映済みなら歌詞も戻す）。\n「オールリセット」でチャット全消去＋最初に生成した歌詞の状態に戻す。"},
                     {h:"AIサポートチャットについて",t:"GUIDEタブの先頭にあるMY LYRIC専用のサポートチャットです。画面右下の💬ボタンからいつでもアクセスできます。\n\n対応内容：\n・MY LYRICの使い方・操作方法\n・ジャンル選択・ミックスの相談\n・歌詞制作のアドバイス\n・Q01〜Q12の入力サポート\n・プロンプト改善の相談\n\n会話は連続した文脈を保持します（最大5往復）。「チャットをリセット」で会話履歴を消去できます。\nMY LYRIC以外の話題・歌詞の丸投げ生成には対応していません。"},
-                    {h:"STEP4（AI用ひらがな整形）について",t:"日本語をひらがな化し、意味のまとまりごとに全角スペースを入れて息継ぎ・リズムが分かる形に整形します。SunoやUdioでの読み間違いを防ぎます。\n\n歌詞が変更された場合は⚠ 警告が表示されます。その場合は再整形してください。"},
-                    {h:"音楽生成AIとプロンプト文字数",t:"STEP5で使用する音楽生成AIと文字数上限を選択できます。\nSuno無料：200〜300文字推奨\nSuno有料（v5）：最大1,000文字\nUdio：文字数制限なし（詳細ほど高品質）"},
+                    {h:"STEP4（AI用ひらがな整形）について",t:"日本語をひらがな化し、意味のまとまりごとに全角スペースを入れて息継ぎ・リズムが分かる形に整形します。音楽生成AIでの読み間違いを防ぎます。\n\n主にSunoやUdioなど、歌詞をテキストで直接入力する形式の音楽生成AI向けの機能です。音楽生成AIがひらがな読みに対応していない場合は通常の歌詞をそのまま使用してください。\n\n歌詞が変更された場合は⚠ 警告が表示されます。その場合は再整形してください。"},
+                    {h:"音楽生成AIとプロンプト文字数",t:"STEP5で使用する音楽生成AIと文字数上限を選択できます。\nSuno無料：200〜300文字推奨\nSuno v5（有料）：最大1,000文字\nUdio：文字数制限なし（詳細ほど高品質）\nその他：任意の文字数を設定できます。\n\n【重要】音楽生成AIによってプロンプトの解釈が異なります。変調・ソロ・BPMなどの詳細な指示は、対応していないAIでは無視される場合があります。効果の出方はAIによって異なりますのでご了承ください。"},
+                    {h:"プロンプトが反映されないときは",t:"設定した内容が音楽生成AIに反映されない場合の対処法です。\n\n①再生成を試す\n同じプロンプトでも生成するたびに結果が変わります。何度か試してみてください。\n\n②文字数を減らしてシンプルにする\nプロンプトが長すぎると重要なキーワードが埋もれる場合があります。KEYWORDSタブのQuickFixで整理できます。\n\n③ジャンルキーワードを優先する\nジャンル・ボーカル・雰囲気のキーワードが最も反映されやすいです。変調・BPMなどの細かい指示は補助的なものとして捉えてください。\n\n④音楽生成AI側の設定も確認する\n使用しているAIのドキュメントやコミュニティで、有効なプロンプトの書き方を確認することをおすすめします。"},
+                    {h:"OFFと未選択の違いについて",t:"一部の設定項目にはOFF・未選択・ONの3状態があります。\n\n未選択（何も選ばない）\n→ AIが素材に合わせて自動で判断します。プロンプトへの指示はありません。\n\nOFF（明示的にオフ）\n→「しない」という指示が音楽生成AIプロンプトに追加されます。\n\nON\n→ 指定した内容がプロンプトに追加されます。\n\nこの3状態が有効な項目：\n・インストゥルメンタルソロ\n・変調（キーチェンジ）\n\nこだわりがなければ未選択でOKです。「絶対に入れたくない」場合はOFFを選んでください。\n\n【操作方法（トグル）】\nOFF・ONボタンはトグル式です。\n・タップで選択（ハイライトされる）\n・選択中のボタンをもう一度タップで解除→未選択状態に戻る"},
+                    {h:"変調（キーチェンジ）について",t:"CREATEタブの詳細設定内にあります。\n\n未選択：AIが判断します\nOFF：「変調なし」の指示が音楽生成AIプロンプトに追加されます\nON：指定したタイミングでキーチェンジの指示がプロンプトに追加されます\n\nタイミングの選択肢：\n・ブリッジで変調\n・大サビで変調\n・両方\n\n※音楽生成AIの種類によって効果の出方が大きく異なります。Suno・Udio・その他のAIでは対応状況が異なり、指示が無視される場合もあります。プロンプトに反映されますが、必ず変調が入る保証はありません。"},
                     {h:"プロンプト生成の条件",t:"プロンプト生成は歌詞がある場合のみ使用できます。\n・STEP1で歌詞を生成した場合\n・STEP1の既存の歌詞欄に歌詞を入力した場合\n\nSTEP5のGENERATE PROMPTはSTEP1の歌詞生成とは独立しています。"},
-                    {h:"STEP6（プロンプト最終チェック）について",t:"プロンプトの診断は最大2回まで実行できます。\n\n🚨 致命的な問題（文字数超過・キーワード欠如など）→「AIが自動修正する」で修正\n⚠ 軽微な問題（キーワード順序など）→ KEYWORDSタブで調整\n\nKEYWORDS（QUICK FIX・追加キーワード）による調整後はSTEP6の再診断をおすすめします。"},
+                    {h:"STEP6（プロンプト最終チェック）について",t:"プロンプトの診断は最大2回まで実行できます。\n\n🚨 致命的な問題（文字数超過・キーワード欠如など）→「AIが自動修正する」で修正\n⚠ 軽微な問題（キーワード順序など）→ KEYWORDSタブで調整\n\nKEYWORDS（QUICK FIX・追加キーワード）による調整後はSTEP6の再診断をおすすめします。\n\n【操作方法】\n①「診断する」ボタンをタップして実行\n②致命的な問題があれば「プロンプトを自動修正」ボタンをタップ\n③軽微な問題はKEYWORDSタブへ移動して調整\n④問題なければSTEP7へ進む",
                     {h:"KEYWORDSタブのQUICK FIXについて",t:"QUICK FIXとEXTRA KEYWORDSは完全独立しています。\n\nQUICK FIX：ボタンを選択して「プロンプトに反映させる」を押すと反映。文字数は自動で上限内に収めます。\nEXTRA KEYWORDS：キーワードを選択または入力して「プロンプトに反映させる」を押すと反映。\n\n「初期プロンプトに戻す」でGENERATE PROMPT直後の状態に戻せます（何度反映しても初期状態に一発で戻ります）。"},
-                    {h:"REVISEタブについて",t:"REVISEは歌詞修正の「伝え方の例」を見る場所です。実際の修正はGENERATEタブのSTEP2にある歌詞編集AIチャットで行います。"},
-                    {h:"MIXタブについて",t:"MIXタブではジャンルミックスの組み合わせ例（64パターン）を確認できます。\nCREATEのSETTINGSでジャンルを最大3つ選ぶと主従で掛け合わせて生成されます。\n\n選んだ順番が主従に影響します（1つ目が主・2つ目以降が従）。\n\nMIXタブは「人気・鉄板」「エモ・切ない」「ロック・バンド」「K-POP・アイドル」「シティポップ・夜」「夏・爽やか」「ダーク・病み」「バラード・アコースティック」「ヒップホップ・クラブ」「和風・和系」「懐かしさ・レトロ」の11カテゴリに分類されています。"},
+                    {h:"REVISEタブについて",t:"REVISEは歌詞修正の「伝え方の例」を見る場所です。実際の修正はGENERATEタブのSTEP2にある歌詞編集AIチャットで行います。
+
+【操作方法】
+①修正したいパターンの「この修正をSTEP2チャットに入力」ボタンをタップ
+②自動的にGENERATEタブのSTEP2歌詞編集チャットに移動し、修正指示が入力される
+③内容を確認してSHIFT+ENTERで送信"},
+                    {h:"MIXタブについて",t:"MIXタブではジャンルミックスの組み合わせ例（64パターン）を確認できます。\nCREATEのSETTINGSでジャンルを最大3つ選ぶと主従で掛け合わせて生成されます。\n\n選んだ順番が主従に影響します（1つ目が主・2つ目以降が従）。\n\nMIXタブは「人気・鉄板」「エモ・切ない」「ロック・バンド」「K-POP・アイドル」「シティポップ・夜」「夏・爽やか」「ダーク・病み」「バラード・アコースティック」「ヒップホップ・クラブ」「和風・和系」「懐かしさ・レトロ」の11カテゴリに分類されています。\n\n【操作方法】\n①参考にしたい組み合わせを確認\n②CREATEタブのSETTINGSでジャンルを選択（選ぶ順番が主従に影響）\n③1つ目に主ジャンル、2つ目以降に従ジャンルを選ぶ"},
                     {h:"ジャンルの決め方",t:"3つのモードがあります。\n①AIにおまかせ：素材から最適なジャンルをAIが判断\n②選んで決める：最大3つ選択可。選んだ順に主従が決まり掛け合わせて生成。系統別に38ジャンルから選択。選択するとそのジャンルの説明が表示されます\n③カスタム入力：ジャンル名とキーワードを自由に指定"},
-                    {h:"インストゥルメンタルソロ設定について",t:"CREATEタブの詳細設定（「詳細設定を開く」）に追加されています。\n\nONにすると歌詞構成にソロパートタグ（例：[Guitar Solo]）が自動挿入され、プロンプトにも対応するキーワードが追加されます。\n\n設定項目：\n・ON/OFF切り替え\n・挿入位置：Bridge前 / 大サビ前 / AIにおまかせ\n・楽器の種類：ギター・ピアノ・サックス・バイオリン・シンセ・和楽器・AIにおまかせ（複数選択可）\n\n楽器を選択しない場合はジャンルに合わせてAIが最適なソロを判断します。"},
+                    {h:"インストゥルメンタルソロ設定について",t:"CREATEタブの詳細設定（「詳細設定を開く」）に追加されています。\n\nONにすると歌詞構成にソロパートタグ（例：[Guitar Solo]）が自動挿入され、プロンプトにも対応するキーワードが追加されます。OFFにすると「ソロなし」の指示がプロンプトに追加されます。\n\n設定項目：\n・OFF / ON（タップで選択・もう一度タップで解除して未選択に戻す）\n・挿入位置：Bridge前 / 大サビ前（タップで選択・再タップで解除）\n・楽器の種類：ギター・ピアノ・サックス・バイオリン・シンセ・和楽器（複数選択可・タップで選択/解除）\n\n未選択（OFF・ONどちらも選んでいない）：AIが素材・ジャンルに合わせて判断します。\n楽器を選択しない場合はジャンルに合わせてAIが最適なソロを判断します。"},
                     {h:"サビの繰り返し設定について",t:"CREATEタブのSETTINGSに追加されています（言語設定の下・詳細設定の上）。\n\nコーラスが複数ある場合にサビの歌詞変化をコントロールできます。\n\n選択肢：\n①コーラス全て同じ：中毒性・統一感を重視\n②コーラス同じ・大サビ変える：ラストのみクライマックスに\n③コーラス少し変化・大サビ全書換：徐々に変化してラストで昇華\n④全て異なる：各サビで異なる表現\n\n未選択の場合はAIが素材に合わせて自動で判断します。\n※ Chorus×2以上とLast Chorusが両方ONの構成のときのみ全4択表示。それ以外は非表示。"},
-                    {h:"詳細設定について",t:"CREATEタブのSETTINGS内「詳細設定を開く」から設定できます。\n\n全て任意です。未選択の項目はAIが素材・ジャンル・感情に合わせて自動で判断します。こだわりたい部分だけ選択すれば十分です。\n\n設定項目：\n・構成（基本/カスタム）\n・声の雰囲気\n・声域（低め←→高め）\n・ボーカリスト系統\n・コード進行\n・BPM・テンポ（遅め←→速め）\n・ターゲット年齢・性別\n・比喩・匂わせのレベル（直接←→比喩）\n・二重構造\n・インストゥルメンタルソロ"},
+                    {h:"詳細設定について",t:"CREATEタブのSETTINGS内「詳細設定を開く」から設定できます。\n\n全て任意です。未選択の項目はAIが素材・ジャンル・感情に合わせて自動で判断します。こだわりたい部分だけ選択すれば十分です。\n\n設定項目：\n・構成（基本/カスタム）\n・声の雰囲気\n・声域（低め←→高め）\n・ボーカリスト系統\n・コード進行\n・BPM・テンポ（遅め←→速め）\n・ターゲット年齢・性別\n・比喩・匂わせのレベル（直接←→比喩）\n・二重構造\n・インストゥルメンタルソロ\n・変調（キーチェンジ）※未選択/OFF/ONの3状態あり"},
                     {h:"制作フロー",t:"【通常ルート】\nSTEP 0: テーマ確認（任意・精度向上）\nSTEP 1: 歌詞を生成（Q01があればすぐ押せる）\nSTEP 2: 歌詞チェック＋歌詞編集AIチャット\nSTEP 3〜7: タイトル・AI用ひらがな整形・プロンプト・プロンプトチェック・世界観カード\n\n【既存歌詞ルート】\nSTEP 1: 既存の歌詞を入力\nSTEP 0: テーマ逆算（任意・精度向上）\nSTEP 2〜7: そのまま利用可能\n\n制作前の確認：\n・テーマの核心を一言で言えるか\n・登場人物の関係性は明確か\n・感情の流れに起承転結があるか\n・終わり方は決まってるか\n・ターゲットリスナーは誰か\n\n制作後の確認：\n・同じパートの行数は揃ってるか\n・ひらがなの音数は揃ってるか\n・伏線と回収は成立してるか\n・比喩が多すぎないか\n・選択したジャンルらしいか\n・プロンプトが文字数上限以内に収まってるか"},
-                    {h:"プロジェクトの保存について",t:"プロジェクト名を決めてSAVEするとこの端末のブラウザ内に保存される。別端末との共有には対応していません。\n\n保存対象：Q01〜Q12・ENDING・ジャンル設定・ボーカル設定・言語設定・構成・その他全設定・既存の歌詞"},
+                    {h:"プロジェクトの保存について",t:"プロジェクト名を決めてSAVEするとこの端末のブラウザ内に保存される。別端末との共有には対応していません。\n\n保存対象：Q01〜Q12・ENDING・ジャンル設定・ボーカル設定・言語設定・構成・その他全設定・既存の歌詞\n\n【操作方法】\n①CREATEタブ上部のPROJECTセクションにプロジェクト名を入力\n②「SAVE」ボタンをタップで保存\n③「LOAD」ボタンをタップで一覧から選んで復元\n④プロジェクト名を変えて保存すると別名で新規保存できます",
                   ].map(function(item,i){return (
                     <div key={i} className="t-guide-item"><div className="t-guide-h">{item.h}</div><div className="t-guide-txt">{item.t}</div></div>
                   );})}
